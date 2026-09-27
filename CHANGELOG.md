@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.4] - 2026-09-27
+
+### Fixed
+
+- Pinned Vercel's Next.js framework preset in `vercel.json` so deployments
+  publish App Router functions and routes rather than only static assets.
+
 ## [v1.6.3] - 2026-09-27
 
 ### Fixed

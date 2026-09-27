@@ -4,6 +4,9 @@ The root project builds with Next.js 16.3.6 and React 19.3.0. Vercel should use
 the repository root, install with pnpm, and run `pnpm build`; the Next.js
 integration supplies the app and Route Handler deployment output. There is no
 catch-all Vercel rewrite because it would intercept API requests.
+The Framework Preset must be **Next.js**, with no Output Directory override.
+`vercel.json` pins the framework so an older "Other" preset cannot publish only
+static assets and return a Vercel 404 for application routes.
 
 ## Required Environment Variables
 
