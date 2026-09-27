@@ -1,9 +1,12 @@
-import { Link, useRouterState, Outlet } from "@tanstack/react-router";
+"use client";
+
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
 import { useAuth } from "~/lib/auth-context";
 import { CelisLogo } from "~/components/branding/celis-logo";
-import { AdminPendingContentScope } from "~/components/layout/route-pending";
 import { ThemeToggle } from "~/components/theme/theme-toggle";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
@@ -28,6 +31,7 @@ import {
 
 interface AdminShellProps {
   permissions: string[];
+  children: ReactNode;
 }
 
 const nav = [
@@ -100,9 +104,8 @@ const nav = [
   },
 ];
 
-export function AdminShell({ permissions }: AdminShellProps) {
-  const { location } = useRouterState();
-  const pathname = location.pathname;
+export function AdminShell({ permissions, children }: AdminShellProps) {
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -187,7 +190,7 @@ export function AdminShell({ permissions }: AdminShellProps) {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                href={item.to}
                 title={collapsed ? item.label : undefined}
                 className={cn(
                   "flex items-center rounded-md py-2.5 text-sm font-medium transition-colors",
@@ -216,7 +219,7 @@ export function AdminShell({ permissions }: AdminShellProps) {
             title="Back to site"
             asChild
           >
-            <Link to="/">
+            <Link href="/">
               {collapsed ? (
                 <Home className="h-4 w-4" />
               ) : (
@@ -274,7 +277,7 @@ export function AdminShell({ permissions }: AdminShellProps) {
           return (
             <Link
               key={item.to}
-              to={item.to}
+              href={item.to}
               className={cn(
                 "flex min-h-[3.5rem] min-w-[3.5rem] flex-1 flex-col items-center justify-center gap-1 px-1 text-xs font-medium transition-colors",
                 active
@@ -297,9 +300,7 @@ export function AdminShell({ permissions }: AdminShellProps) {
         )}
       >
         <div className="w-full px-4 py-4 md:px-5 md:py-6 xl:px-6">
-          <AdminPendingContentScope>
-            <Outlet />
-          </AdminPendingContentScope>
+          {children}
         </div>
       </main>
     </div>

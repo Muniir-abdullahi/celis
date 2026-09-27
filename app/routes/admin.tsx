@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AdminShell } from "~/components/admin/admin-shell";
 import { AdminShellPending } from "~/components/layout/route-pending";
 import {
@@ -36,5 +36,9 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const { permissions } = Route.useLoaderData();
-  return <AdminShell permissions={permissions} />;
+  return (
+    <AdminShell permissions={permissions}>
+      <Outlet />
+    </AdminShell>
+  );
 }

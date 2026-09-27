@@ -26,11 +26,12 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-The home, browse, search, listing detail, shop, sell, account, dashboard,
+The home, browse, search, listing detail, shop, sell, account, dashboard, and
+admin dashboard
 notifications, full password recovery flow, sign-in, sign-up, privacy, and terms
 screens are now native App Router pages.
-Protected account, dashboard, and notification routes verify the Supabase session on the
-server. Home and browse load live marketplace data through existing server
+Protected account, dashboard, notification, and admin routes verify the
+Supabase session and permissions on the server. Home and browse load live marketplace data through existing server
 actions; search reads filters from the URL and renders its result set on the
 server. Shared auth, theme, and query providers mount from the Next root layout,
 and shared navigation uses Next.js links. Other marketplace screens still run

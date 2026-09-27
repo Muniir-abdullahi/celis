@@ -12,10 +12,11 @@
   context. The existing TanStack client route tree remains as a compatibility
   layer until individual screens are ported.
 - Added native App Router home, browse, search, listing detail, shop, sell,
-  account, dashboard,
+  account, dashboard, admin dashboard,
   notifications, full
   password recovery, sign-in, sign-up, privacy, and terms pages. Protected
-  account, dashboard, and notification routes validate sessions on the server. Home and
+  account, dashboard, notification, and admin routes validate sessions and
+  permissions on the server. Home and
   browse load live marketplace data through existing server actions;
   search reads its filters from the URL and renders results on the server. Legal
   pages use the canonical HTML documents. Shared auth, theme, query providers,
