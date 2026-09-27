@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     "Discover local deals on electronics, vehicles, property, fashion, and more in Somalia.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function BrowsePage() {
   const [featured, categories] = await Promise.all([
     fetchFeaturedListings(),

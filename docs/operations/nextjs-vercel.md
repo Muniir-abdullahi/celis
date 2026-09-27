@@ -26,10 +26,11 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-The browse, privacy, and terms screens are now native App Router pages. The
-browse page loads featured listings and categories through the existing server
-actions. Shared auth, theme, and query providers mount from the Next root
-layout, and the shared site header, footer, and notification menu use Next
-navigation. Other marketplace screens still run through TanStack Router inside
-the Next catch-all page. Continue moving screens to App Router, then remove
-TanStack Router/Start and the unused Vite configuration and dependencies.
+The home, browse, search, privacy, and terms screens are now native App Router
+pages. Home and browse load live marketplace data through existing server
+actions; search reads filters from the URL and renders its result set on the
+server. Shared auth, theme, and query providers mount from the Next root layout,
+and shared navigation uses Next.js links. Other marketplace screens still run
+through TanStack Router inside the required Next catch-all page. Continue moving
+screens to App Router, then remove TanStack Router/Start and the unused Vite
+configuration and dependencies.
