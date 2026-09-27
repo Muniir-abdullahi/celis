@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -17,7 +19,7 @@ export function ListingCard({ listing }: ListingCardProps) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <Link to="/listings/$id" params={{ id: listing.id }} className="group block">
+    <Link href={`/listings/${listing.id}`} className="group block">
       <Card className="overflow-hidden transition-shadow hover:shadow-md">
         <div className="aspect-[4/3] overflow-hidden bg-celis-surface-inset">
           {!loaded && <Skeleton className="h-full w-full rounded-none" />}

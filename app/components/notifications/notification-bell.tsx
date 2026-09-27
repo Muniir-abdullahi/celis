@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -23,7 +24,7 @@ import type { NotificationItem } from "~/server/notifications.functions";
 const PREVIEW_LIMIT = 8;
 
 export function NotificationBell() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -50,9 +51,9 @@ export function NotificationBell() {
       await load();
     }
     if (notification.link) {
-      navigate({ to: notification.link as any });
+      router.push(notification.link);
     } else {
-      navigate({ to: "/notifications" });
+      router.push("/notifications");
     }
   };
 
@@ -117,7 +118,7 @@ export function NotificationBell() {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer justify-center text-celis-primary">
-              <Link to="/notifications">View all notifications</Link>
+              <Link href="/notifications">View all notifications</Link>
             </DropdownMenuItem>
           </>
         )}

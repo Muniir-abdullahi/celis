@@ -5,7 +5,7 @@ import {
   useCallback,
   useEffect,
 } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { fetchCurrentUser, signOut } from "~/server/auth.functions";
 import type { CurrentUser } from "~/server/auth.server";
 
@@ -27,7 +27,7 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<CurrentUser | null | undefined>(initialUser);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -42,10 +42,11 @@ export function AuthProvider({
   const logout = useCallback(async () => {
     await signOut();
     setUser(null);
-    navigate({ to: "/" });
-  }, [navigate]);
+    router.push("/");
+  }, [router]);
 
   useEffect(() => {
+    void refresh();
     // Revalidate auth when window regains focus in case session changed in another tab.
     const onFocus = () => refresh();
     window.addEventListener("focus", onFocus);

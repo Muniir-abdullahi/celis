@@ -26,9 +26,10 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-Marketplace UI routes still run through the existing TanStack client router
-inside the Next.js catch-all page. The server-function modules have been
-converted to validated Next.js Server Actions, and the mobile listing-fee
-endpoint is a Next.js Route Handler. Remaining work is to move each screen to
-the Next.js App Router, then remove TanStack Router/Start and the unused Vite
-configuration and dependencies.
+The browse, privacy, and terms screens are now native App Router pages. The
+browse page loads featured listings and categories through the existing server
+actions. Shared auth, theme, and query providers mount from the Next root
+layout, and the shared site header, footer, and notification menu use Next
+navigation. Other marketplace screens still run through TanStack Router inside
+the Next catch-all page. Continue moving screens to App Router, then remove
+TanStack Router/Start and the unused Vite configuration and dependencies.

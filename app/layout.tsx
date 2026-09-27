@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+import { Providers } from "./providers";
 import "~/styles/globals.css";
 
 const description =
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-background text-foreground">
-        {children}
+        <Providers>{children}</Providers>
         <Script
           src="https://analytics.rukun.com.so/js/pixel.js"
           data-domain="celis.so"

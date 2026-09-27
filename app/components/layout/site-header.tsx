@@ -1,4 +1,7 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "~/lib/auth-context";
 import { useTheme } from "~/lib/theme-provider";
@@ -42,7 +45,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -56,7 +59,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-celis-border bg-celis-bg/85 backdrop-blur-lg">
       <div className="mx-auto flex min-h-[3.5rem] max-w-7xl items-center gap-3 px-4 md:min-h-[4rem]">
-        <Link to="/" className="flex shrink-0 items-center gap-2">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <CelisLogo variant="primary" size={40} />
         </Link>
 
@@ -69,10 +72,9 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
               e.preventDefault();
               const form = e.currentTarget;
               const query = new FormData(form).get("q") as string;
-              navigate({
-                to: "/search",
-                search: { query: query || undefined },
-              });
+              const params = new URLSearchParams();
+              if (query) params.set("query", query);
+              router.push(`/search${params.size ? `?${params}` : ""}`);
             }}
           >
             <div className="relative w-full max-w-sm xl:max-w-md">
@@ -93,7 +95,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
             asChild
             className="hidden lg:inline-flex"
           >
-            <Link to="/browse">Browse</Link>
+            <Link href="/browse">Browse</Link>
           </Button>
           <Button
             variant="ghost"
@@ -101,7 +103,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
             asChild
             className="hidden lg:inline-flex"
           >
-            <Link to="/search">Search</Link>
+            <Link href="/search">Search</Link>
           </Button>
 
           <Button
@@ -123,7 +125,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
               <>
                 <NotificationBell />
                 <Button size="sm" asChild>
-                  <Link to="/sell">
+                  <Link href="/sell">
                     <Plus className="mr-1 h-4 w-4" />
                     Sell
                   </Link>
@@ -141,25 +143,25 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem asChild>
-                      <Link to="/account">
+                      <Link href="/account">
                         <User className="mr-2 h-4 w-4" />
                         Account
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to={user.isInternal ? "/admin" : "/dashboard"}>
+                      <Link href={user.isInternal ? "/admin" : "/dashboard"}>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="lg:hidden">
-                      <Link to="/browse">
+                      <Link href="/browse">
                         <Grid2X2 className="mr-2 h-4 w-4" />
                         Browse
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="lg:hidden">
-                      <Link to="/search">
+                      <Link href="/search">
                         <Search className="mr-2 h-4 w-4" />
                         Search
                       </Link>
@@ -181,10 +183,10 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
             ) : (
               <>
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/auth/sign-in">Sign in</Link>
+                  <Link href="/auth/sign-in">Sign in</Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link to="/auth/sign-up">Get started</Link>
+                  <Link href="/auth/sign-up">Get started</Link>
                 </Button>
               </>
             )}
@@ -209,12 +211,12 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
           </DialogHeader>
           <div className="flex flex-col gap-2 py-2">
             <Button variant="ghost" asChild className="justify-start">
-              <Link to="/browse" onClick={() => setMenuOpen(false)}>
+              <Link href="/browse" onClick={() => setMenuOpen(false)}>
                 Browse
               </Link>
             </Button>
             <Button variant="ghost" asChild className="justify-start">
-              <Link to="/search" onClick={() => setMenuOpen(false)}>
+              <Link href="/search" onClick={() => setMenuOpen(false)}>
                 Search
               </Link>
             </Button>
@@ -222,20 +224,19 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
             {user ? (
               <>
                 <Button variant="ghost" asChild className="justify-start">
-                  <Link to="/notifications" onClick={() => setMenuOpen(false)}>
+                  <Link href="/notifications" onClick={() => setMenuOpen(false)}>
                     <Bell className="mr-2 h-4 w-4" />
                     Notifications
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild className="justify-start">
-                  <Link to="/account" onClick={() => setMenuOpen(false)}>
+                  <Link href="/account" onClick={() => setMenuOpen(false)}>
                     <User className="mr-2 h-4 w-4" />
                     Account
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild className="justify-start">
-                  <Link
-                    to={user.isInternal ? "/admin" : "/dashboard"}
+                  <Link href={user.isInternal ? "/admin" : "/dashboard"}
                     onClick={() => setMenuOpen(false)}
                   >
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -243,7 +244,7 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild className="justify-start">
-                  <Link to="/sell" onClick={() => setMenuOpen(false)}>
+                  <Link href="/sell" onClick={() => setMenuOpen(false)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Sell
                   </Link>
@@ -264,12 +265,12 @@ export function SiteHeader({ showSearch = true }: SiteHeaderProps) {
             ) : (
               <>
                 <Button variant="outline" asChild className="justify-start">
-                  <Link to="/auth/sign-in" onClick={() => setMenuOpen(false)}>
+                  <Link href="/auth/sign-in" onClick={() => setMenuOpen(false)}>
                     Sign in
                   </Link>
                 </Button>
                 <Button asChild className="justify-start">
-                  <Link to="/auth/sign-up" onClick={() => setMenuOpen(false)}>
+                  <Link href="/auth/sign-up" onClick={() => setMenuOpen(false)}>
                     Get started
                   </Link>
                 </Button>

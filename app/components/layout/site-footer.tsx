@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { CelisLogo } from "~/components/branding/celis-logo";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
@@ -20,9 +22,9 @@ export function SiteFooter() {
           <div>
             <h4 className="mb-4 font-semibold">Marketplace</h4>
             <ul className="space-y-2 text-sm text-celis-ink-secondary">
-              <li><Link to="/browse" className="hover:text-celis-ink">Browse</Link></li>
-              <li><Link to="/search" className="hover:text-celis-ink">Search</Link></li>
-              <li><Link to="/sell" className="hover:text-celis-ink">Sell an item</Link></li>
+              <li><Link href="/browse" className="hover:text-celis-ink">Browse</Link></li>
+              <li><Link href="/search" className="hover:text-celis-ink">Search</Link></li>
+              <li><Link href="/sell" className="hover:text-celis-ink">Sell an item</Link></li>
             </ul>
           </div>
           <div>
@@ -31,8 +33,7 @@ export function SiteFooter() {
               {user ? (
                 <>
                   <li>
-                    <Link
-                      to={user.isInternal ? "/admin" : "/dashboard"}
+                    <Link href={user.isInternal ? "/admin" : "/dashboard"}
                       className="hover:text-celis-ink"
                     >
                       Dashboard
@@ -51,8 +52,8 @@ export function SiteFooter() {
                 </>
               ) : (
                 <>
-                  <li><Link to="/auth/sign-in" className="hover:text-celis-ink">Sign in</Link></li>
-                  <li><Link to="/auth/sign-up" className="hover:text-celis-ink">Create account</Link></li>
+                  <li><Link href="/auth/sign-in" className="hover:text-celis-ink">Sign in</Link></li>
+                  <li><Link href="/auth/sign-up" className="hover:text-celis-ink">Create account</Link></li>
                 </>
               )}
             </ul>
@@ -70,8 +71,8 @@ export function SiteFooter() {
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-celis-ink-secondary sm:flex-row">
           <p>© {new Date().getFullYear()} Celis. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link to="/privacy" className="hover:text-celis-ink">Privacy</Link>
-            <Link to="/terms" className="hover:text-celis-ink">Terms</Link>
+            <Link href="/privacy" className="hover:text-celis-ink">Privacy</Link>
+            <Link href="/terms" className="hover:text-celis-ink">Terms</Link>
           </div>
         </div>
       </div>
