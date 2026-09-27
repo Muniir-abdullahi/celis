@@ -30,8 +30,7 @@
       ]
     },
     "types": [
-      "node",
-      "vite/client"
+      "node"
     ],
     "incremental": true,
     "esModuleInterop": true

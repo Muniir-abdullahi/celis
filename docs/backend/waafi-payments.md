@@ -10,8 +10,8 @@ session and listing ownership, recalculates the fee from the stored listing
 price, and then uses the encrypted Waafi credentials. Mobile clients never send
 an amount or receive provider credentials.
 
-For physical-device development, `npm run dev` binds Vite to the LAN. The mobile
-API URL must use the development computer's reachable LAN address. Payment logs
+For physical-device development, `pnpm dev` binds Next.js to `0.0.0.0:3000`.
+The mobile API URL must use the development computer's reachable LAN address. Payment logs
 use the `[mobile-listing-payment]` and `[wallet-payment]` prefixes and omit wallet
 phone numbers and gateway credentials.
 

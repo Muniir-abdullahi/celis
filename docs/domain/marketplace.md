@@ -33,10 +33,10 @@ Key files:
 - `app/server/listings.server.ts`
 - `app/server/listings.functions.ts`
 - `app/server/listing-interactions.functions.ts`
-- `app/routes/listings.$id.tsx`
-- `app/routes/sell.tsx`
-- `app/routes/search.tsx`
-- `app/routes/browse.tsx`
+- `app/listings/[id]/page.tsx`
+- `app/sell/page.tsx`
+- `app/search/page.tsx`
+- `app/browse/page.tsx`
 - `app/components/listings/**`
 - `scripts/expire-listings.ts`
 
@@ -53,7 +53,7 @@ Rules:
 Key files:
 
 - `app/db/schema/orders.ts`
-- `app/routes/admin/orders.tsx`
+- `app/admin/orders/page.tsx`
 - `fig_3_1_order_state_machine.png`
 
 Rules:
@@ -75,7 +75,7 @@ Key files:
 - `app/server/payments.functions.ts`
 - `app/server/payment-gateways.server.ts`
 - `app/server/waafi.server.ts`
-- `app/routes/admin/payouts.tsx`
+- `app/admin/payouts/page.tsx`
 - `app/components/listings/payment-modal.tsx`
 
 Rules:
@@ -100,7 +100,7 @@ Key files:
 
 - `app/db/schema/seller-packages.ts`
 - `app/server/seller-packages.server.ts`
-- `app/routes/admin/packages.tsx`
+- `app/admin/packages/page.tsx`
 - `app/lib/pricing.ts`
 
 Rules:
@@ -134,9 +134,9 @@ Key files:
 - `app/server/admin.server.ts`
 - `app/server/admin.functions.ts`
 - `app/server/audit.server.ts`
-- `app/routes/admin/listings.tsx`
-- `app/routes/admin/roles.tsx`
-- `app/routes/admin/audit-log.tsx`
+- `app/admin/listings/page.tsx`
+- `app/admin/roles/page.tsx`
+- `app/admin/audit-log/page.tsx`
 
 Rules:
 

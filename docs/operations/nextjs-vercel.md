@@ -26,17 +26,12 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-The home, browse, search, listing detail, shop, sell, account, dashboard,
-notifications, admin dashboard, listings and listing detail, categories, packages,
-reports, settings, users, roles, orders, payouts, audit log, seller
-verifications, full password
-recovery flow, sign-in, sign-up, privacy, and terms screens are now native App
-Router pages.
-Protected account, dashboard, notification, and admin routes verify the
-Supabase session and permissions on the server. Home and browse load live marketplace data through existing server
-actions; search reads filters from the URL and renders its result set on the
-server. Shared auth, theme, and query providers mount from the Next root layout,
-and shared navigation uses Next.js links. Other marketplace screens still run
-through TanStack Router inside the required Next catch-all page. Continue moving
-screens to App Router, then remove TanStack Router/Start and the unused Vite
-configuration and dependencies.
+All marketplace, auth, seller, admin, legal, and mobile API routes are native
+Next.js App Router pages or Route Handlers. Protected account, dashboard,
+notification, and admin routes verify the Supabase session and permissions on
+the server. Home and browse load live marketplace data through existing server
+actions; search reads filters from the URL and renders results on the server.
+Shared auth, theme, and query providers mount from the Next root layout, and
+shared navigation uses Next.js links. The legacy TanStack Router tree and Vite
+configuration have been removed; TanStack Query remains for client-side cache
+management.

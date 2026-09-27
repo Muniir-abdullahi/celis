@@ -1,18 +1,14 @@
 # Frontend UI
 
-This guide covers the Next.js deployment shell, the existing client route tree,
-listing UI, admin UI, forms, dialogs, tables, and the design-system pointer.
+This guide covers the Next.js App Router, listing UI, admin UI, forms, dialogs,
+tables, and the design-system pointer.
 
 ## Next.js Migration Status
 
-- Vercel and local `dev`/`build`/`start` commands now use Next.js 16 App Router.
+- Vercel and local `dev`/`build`/`start` commands use Next.js 16 App Router.
 - `app/layout.tsx` owns the document shell and global stylesheet.
-- `app/[[...segments]]/page.tsx` currently mounts the existing client router so
-  marketplace screens remain available while they are migrated to App Router
-  pages. Do not add business routes to that catch-all as the end state.
-- TanStack Router and `app/routeTree.gen.ts` are transitional. Do not edit the
-  generated route tree manually; remove it only when all screen routes have
-  moved to Next.js.
+- All marketplace screens and the mobile payment endpoint use native App Router
+  pages and Route Handlers. There is no catch-all compatibility router.
 - Next public Supabase settings use `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Keep service-role and provider secrets
   server-only.
@@ -23,12 +19,10 @@ Key files:
 
 - `app/layout.tsx`
 - `app/api/**/route.ts`
-- `app/[[...segments]]/page.tsx` (temporary compatibility router)
-- `app/router.tsx` and `app/routes/**` (transitional)
+- `app/page.tsx` and route-specific `page.tsx` files
 
 Rules:
 
-- Do not edit `app/routeTree.gen.ts` manually.
 - Keep route files as route shells plus page composition.
 - Move large sections into components.
 - Move data queries/mutations into server modules.
@@ -57,7 +51,7 @@ Rules:
 
 Key files:
 
-- `app/routes/admin/**`
+- `app/admin/**`
 - `app/components/admin/admin-table.tsx`
 - `app/components/admin/confirm-dialog.tsx`
 - `app/components/admin/status-badge.tsx`

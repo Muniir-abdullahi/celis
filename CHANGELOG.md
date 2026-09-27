@@ -25,6 +25,11 @@
   and navigation now use the Next root layout and App Router. Replaced the
   optional route fallback with a required catch-all so Next can serve `/`
   directly.
+- Completed the migration to Next.js App Router across marketplace, auth,
+  seller, admin, legal, and mobile API routes. Removed the TanStack Router/Start
+  route tree, catch-all mount, router-only loading UI, and Vite configuration
+  and dependencies. TanStack Query remains for client data caching. Updated
+  the App Router, Vercel, and mobile API development documentation.
 
 ## [v1.5.0] - 2026-09-02
 

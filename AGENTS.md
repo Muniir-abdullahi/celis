@@ -6,7 +6,7 @@ This is the root guide for AI agents working in Celis. Read this first.
 
 Celis is a Somalia P2P marketplace built with:
 
-- Next.js 16 App Router (migration in progress; client routes still use TanStack Router)
+- Next.js 16 App Router
 - React 19.3
 - Drizzle ORM
 - Postgres / Supabase
@@ -29,7 +29,7 @@ Do not replace these documents. Summarize and route to them from the maintained 
 - Duplicate the working pattern first, then adjust only the resource-specific details.
 - Keep listing, search, admin, auth, payments, payouts, seller package, moderation, and RBAC flows consistent.
 - Extract shared behavior instead of copy-pasting it a third time.
-- Never edit `app/routeTree.gen.ts` manually.
+- App Router routes live under `app/`; follow Next.js route conventions.
 
 ## Living Docs Protocol
 
@@ -72,9 +72,9 @@ Use SemVer for `CHANGELOG.md`:
 - Server files over 500 lines are refactor targets.
 - Files near or above 1,000 lines are unacceptable for new work.
 - Existing large files are refactor targets, especially:
-  - `app/routes/index.tsx`
+  - `app/page.tsx`
   - `app/server/admin.server.ts`
-  - `app/routes/listings.$id.tsx`
+  - `app/listings/[id]/page.tsx`
   - `app/components/listings/listing-wizard.tsx`
   - `app/server/listings.server.ts`
 - Split large files into route shell, query module, mutation module, table component, form component, dialogs, and section components.
@@ -98,7 +98,7 @@ Use SemVer for `CHANGELOG.md`:
 
 ## Frontend Rules
 
-- Route pages live under `app/routes`.
+- Route pages live under `app/` using Next.js App Router conventions.
 - Shared UI belongs under `app/components`.
 - Admin UI patterns belong under `app/components/admin`.
 - Listing UI patterns belong under `app/components/listings`.
@@ -141,14 +141,10 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 | File | Role |
 | :--- | :--- |
 | `app/layout.tsx` | Next.js document shell |
-| `app/[...segments]/page.tsx` | Transitional route-tree mount; migrate screens into App Router routes |
-| `app/router.tsx` | Router setup |
-| `app/routes/__root.tsx` | Root route |
-| `app/routes/index.tsx` | Landing/home route |
-| `app/routes/search.tsx` | Search route |
-| `app/routes/browse.tsx` | Browse route |
-| `app/routes/listings.$id.tsx` | Listing detail route |
-| `app/routeTree.gen.ts` | Generated route tree; do not edit manually |
+| `app/page.tsx` | Marketplace landing page |
+| `app/browse/page.tsx` | Marketplace browse route |
+| `app/search/page.tsx` | Marketplace search route |
+| `app/listings/[id]/page.tsx` | Listing detail route |
 
 ### Server/Data
 
@@ -168,7 +164,7 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 
 | File | Role |
 | :--- | :--- |
-| `app/routes/admin/**` | Admin pages |
+| `app/admin/**` | Admin pages |
 | `app/components/admin/admin-table.tsx` | Admin table pattern |
 | `app/components/admin/confirm-dialog.tsx` | Confirmation dialog |
 | `app/components/admin/status-badge.tsx` | Status badge |
@@ -197,7 +193,6 @@ Use the local skill before working in that area:
 
 ## Do Not
 
-- Do not edit `app/routeTree.gen.ts` manually.
 - Do not create another one-off table, confirm dialog, status badge, or pagination system.
 - Do not load all rows for admin pages.
 - Do not hide marketplace status changes behind immediate action buttons.
