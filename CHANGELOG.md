@@ -11,7 +11,8 @@
   Server Actions and moved Supabase SSR cookie handling to Next's request
   context. The existing TanStack client route tree remains as a compatibility
   layer until individual screens are ported.
-- Added native App Router home, browse, search, listing detail, sell, account, dashboard,
+- Added native App Router home, browse, search, listing detail, shop, sell,
+  account, dashboard,
   notifications, full
   password recovery, sign-in, sign-up, privacy, and terms pages. Protected
   account, dashboard, and notification routes validate sessions on the server. Home and
