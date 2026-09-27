@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   getAdminWaafiGateway,
@@ -29,10 +30,11 @@ const waafiGatewaySchema = z
     }
   });
 
-export const fetchAdminWaafiGateway = createServerFn({ method: "GET" }).handler(
-  getAdminWaafiGateway
-);
+export async function fetchAdminWaafiGateway() {
+  return getAdminWaafiGateway();
+}
 
-export const updateAdminWaafiGateway = createServerFn({ method: "POST" })
-  .validator(waafiGatewaySchema)
-  .handler(async ({ data }) => saveAdminWaafiGateway(data));
+export async function updateAdminWaafiGateway(input: { data: unknown }) {
+  const data = (waafiGatewaySchema).parse(input.data);
+return saveAdminWaafiGateway(data);
+}

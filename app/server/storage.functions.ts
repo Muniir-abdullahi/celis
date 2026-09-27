@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import { createListingImageUploadUrl } from "./storage.server";
 
@@ -8,8 +9,8 @@ const uploadUrlSchema = z.object({
   fileType: z.string().regex(/^image\//, "Only image files are allowed"),
 });
 
-export const getListingImageUploadUrl = createServerFn({ method: "POST" })
-  .validator(uploadUrlSchema)
-  .handler(async ({ data }) => {
+export async function getListingImageUploadUrl(input: { data: unknown }) {
+  const data = (uploadUrlSchema).parse(input.data);
+
     return createListingImageUploadUrl(data.sellerId, data.fileName, data.fileType);
-  });
+}

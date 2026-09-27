@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   getListingFeeCents,
@@ -9,24 +10,26 @@ import {
   getFeaturedListingFeeCents,
 } from "./config.server";
 
-export const getListingFee = createServerFn({ method: "GET" }).handler(async () => {
+export async function getListingFee() {
+
   return getListingFeeCents();
-});
+}
 
-export const getFeaturedListingFee = createServerFn({ method: "GET" }).handler(
-  async () => getFeaturedListingFeeCents()
-);
+export async function getFeaturedListingFee() {
+return getFeaturedListingFeeCents();
+}
 
-export const getListingTiers = createServerFn({ method: "GET" }).handler(async () => {
+export async function getListingTiers() {
+
   return getListingTiersConfig();
-});
+}
 
-export const getMonetizationModel = createServerFn({ method: "GET" }).handler(
-  async () => getPlatformMonetizationModel()
-);
+export async function getMonetizationModel() {
+return getPlatformMonetizationModel();
+}
 
-export const getFeatureToggles = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function getFeatureToggles() {
+
     const [
       localPickupEnabled,
       platformShippingEnabled,
@@ -47,16 +50,15 @@ export const getFeatureToggles = createServerFn({ method: "GET" }).handler(
       premierWalletEnabled: premierWalletEnabled ?? true,
       edahabEnabled: edahabEnabled ?? true,
     };
-  }
-);
+}
 
 const pricingPreviewSchema = z.object({
   price: z.coerce.number().int().min(0),
   categoryId: z.string().uuid(),
 });
 
-export const getListingPricingPreview = createServerFn({ method: "GET" })
-  .validator(pricingPreviewSchema)
-  .handler(async ({ data }) => {
+export async function getListingPricingPreview(input: { data: unknown }) {
+  const data = (pricingPreviewSchema).parse(input.data);
+
     return getListingPricing(data.price, data.categoryId);
-  });
+}

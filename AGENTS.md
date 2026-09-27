@@ -6,9 +6,8 @@ This is the root guide for AI agents working in Celis. Read this first.
 
 Celis is a Somalia P2P marketplace built with:
 
-- Vite
-- TanStack Start / TanStack Router
-- React 19 RC
+- Next.js 16 App Router (migration in progress; client routes still use TanStack Router)
+- React 19.3
 - Drizzle ORM
 - Postgres / Supabase
 - TanStack Query
@@ -141,6 +140,8 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 
 | File | Role |
 | :--- | :--- |
+| `app/layout.tsx` | Next.js document shell |
+| `app/[[...segments]]/page.tsx` | Transitional route-tree mount; migrate screens into App Router routes |
 | `app/router.tsx` | Router setup |
 | `app/routes/__root.tsx` | Root route |
 | `app/routes/index.tsx` | Landing/home route |
@@ -160,7 +161,8 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 | `app/server/payments.server.ts` | Payment behavior |
 | `app/server/seller-packages.server.ts` | Seller package behavior |
 | `app/server/storage.server.ts` | Storage behavior |
-| `app/server/*.functions.ts` | Server functions/mutations |
+| `app/server/*.functions.ts` | Validated Next.js Server Actions |
+| `app/api/**/route.ts` | Next.js HTTP handlers and integrations |
 
 ### Admin UI
 
@@ -187,7 +189,7 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 
 Use the local skill before working in that area:
 
-- TanStack Start/router/server functions: `.cursor/skills/tanstack-start-development/SKILL.md`
+- Next.js App Router, Server Actions, and Route Handlers: follow the patterns in `docs/frontend/ui.md`, `docs/backend/architecture.md`, and `docs/operations/nextjs-vercel.md`.
 - Drizzle/Postgres/schema/query work: `.cursor/skills/drizzle-postgres-development/SKILL.md`
 - Marketplace listings/orders/packages: `.cursor/skills/marketplace-domain-development/SKILL.md`
 - Admin/RBAC/moderation/audit: `.cursor/skills/admin-rbac-development/SKILL.md`

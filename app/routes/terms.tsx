@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 // Bilingual terms of service authored for celis.so (pending qualified legal
 // review). Its body is rendered inside the Celis site chrome below; the source
 // file is also served verbatim at /terms/index.html.
-import termsHtml from "../../public/terms/index.html?raw";
 import { LegalDocument } from "~/components/layout/legal-document";
 import { parseLegalDoc } from "~/lib/legal-doc";
-
-const terms = parseLegalDoc(termsHtml);
 
 export const Route = createFileRoute("/terms")({
   component: TermsPage,
@@ -23,5 +21,11 @@ export const Route = createFileRoute("/terms")({
 });
 
 function TermsPage() {
-  return <LegalDocument {...terms} />;
+  const [terms, setTerms] = useState<ReturnType<typeof parseLegalDoc> | null>(null);
+  useEffect(() => {
+    void fetch("/terms/index.html")
+      .then((response) => response.text())
+      .then((html) => setTerms(parseLegalDoc(html)));
+  }, []);
+  return terms ? <LegalDocument {...terms} /> : null;
 }

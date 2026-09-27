@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   getSupabaseServerClient,
@@ -24,11 +25,10 @@ const credentialsSchema = z.object({
   password: z.string().min(6),
 });
 
-export const fetchCurrentUser = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchCurrentUser() {
+
     return getCurrentUser();
-  }
-);
+}
 
 const signUpSchema = z.object({
   email: z.string().email(),
@@ -42,9 +42,9 @@ const signUpSchema = z.object({
   shopSlug: z.string().max(120).optional(),
 });
 
-export const signUp = createServerFn({ method: "POST" })
-  .validator(signUpSchema)
-  .handler(async ({ data }) => {
+export async function signUp(input: { data: unknown }) {
+  const data = (signUpSchema).parse(input.data);
+
     // Use the service-role client to create the user with a confirmed email.
     // This avoids Supabase's sign-up email rate limit and skips the
     // confirmation step in this environment.
@@ -88,7 +88,7 @@ export const signUp = createServerFn({ method: "POST" })
       .where(eq(profiles.id, authData.user.id));
 
     // Sign in with the anon client so the session cookies are set for the user.
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
@@ -98,12 +98,12 @@ export const signUp = createServerFn({ method: "POST" })
     }
 
     return { success: true, userId: authData.user.id };
-  });
+}
 
-export const signIn = createServerFn({ method: "POST" })
-  .validator(credentialsSchema)
-  .handler(async ({ data }) => {
-    const supabase = getSupabaseServerClient();
+export async function signIn(input: { data: unknown }) {
+  const data = (credentialsSchema).parse(input.data);
+
+    const supabase = await getSupabaseServerClient();
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
@@ -115,20 +115,20 @@ export const signIn = createServerFn({ method: "POST" })
 
     await ensureLocalUserRecord(authData.user.id, authData.user.email);
     return { success: true, userId: authData.user.id };
-  });
+}
 
-export const signOut = createServerFn({ method: "POST" }).handler(async () => {
-  const supabase = getSupabaseServerClient();
+export async function signOut() {
+
+  const supabase = await getSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
   return { success: true };
-});
+}
 
-export const fetchCurrentUserProfile = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchCurrentUserProfile() {
+
     return getCurrentUserProfile();
-  }
-);
+}
 
 const updateProfileSchema = z.object({
   displayName: z.string().min(2).max(60),
@@ -142,50 +142,51 @@ const updateProfileSchema = z.object({
   shopSlug: z.string().max(120).optional(),
 });
 
-export const updateCurrentUserProfile = createServerFn({ method: "POST" })
-  .validator(updateProfileSchema)
-  .handler(async ({ data }) => {
+export async function updateCurrentUserProfile(input: { data: unknown }) {
+  const data = (updateProfileSchema).parse(input.data);
+
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return updateUserProfile(user.id, data);
-  });
+}
 
-export const fetchCurrentUserPermissions = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchCurrentUserPermissions() {
+
     const user = await getCurrentUser();
     if (!user) return [];
     return getUserPermissions(user);
-  }
-);
+}
 
-export const fetchAllPermissions = createServerFn({ method: "GET" }).handler(
-  async () => listPermissions()
-);
+export async function fetchAllPermissions() {
+return listPermissions();
+}
 
 const rolePermissionsQuerySchema = z.object({
   role: z.string(),
 });
 
-export const fetchRolePermissions = createServerFn({ method: "GET" })
-  .validator(rolePermissionsQuerySchema)
-  .handler(async ({ data }) => getRolePermissions(data.role));
+export async function fetchRolePermissions(input: { data: unknown }) {
+  const data = (rolePermissionsQuerySchema).parse(input.data);
+return getRolePermissions(data.role);
+}
 
 const updateRolePermissionsSchema = z.object({
   role: z.string(),
   permissionKeys: z.array(z.string()),
 });
 
-export const updateRolePermissions = createServerFn({ method: "POST" })
-  .validator(updateRolePermissionsSchema)
-  .handler(async ({ data }) => {
+export async function updateRolePermissions(input: { data: unknown }) {
+  const data = (updateRolePermissionsSchema).parse(input.data);
+
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return setRolePermissions(data.role, data.permissionKeys, user);
-  });
+}
 
-export const fetchRoles = createServerFn({ method: "GET" }).handler(async () => {
+export async function fetchRoles() {
+
   return listRoles();
-});
+}
 
 const createRoleSchema = z.object({
   key: z.string().min(2).max(60),
@@ -194,9 +195,10 @@ const createRoleSchema = z.object({
   domain: z.enum(["customer", "internal"]).default("internal"),
 });
 
-export const createRoleFn = createServerFn({ method: "POST" })
-  .validator(createRoleSchema)
-  .handler(async ({ data }) => createRole(data));
+export async function createRoleFn(input: { data: unknown }) {
+  const data = (createRoleSchema).parse(input.data);
+return createRole(data);
+}
 
 const updateRoleSchema = z.object({
   key: z.string(),
@@ -205,12 +207,14 @@ const updateRoleSchema = z.object({
   domain: z.enum(["customer", "internal"]).default("internal"),
 });
 
-export const updateRoleFn = createServerFn({ method: "POST" })
-  .validator(updateRoleSchema)
-  .handler(async ({ data }) => updateRole(data.key, data));
+export async function updateRoleFn(input: { data: unknown }) {
+  const data = (updateRoleSchema).parse(input.data);
+return updateRole(data.key, data);
+}
 
 const deleteRoleSchema = z.object({ key: z.string() });
 
-export const deleteRoleFn = createServerFn({ method: "POST" })
-  .validator(deleteRoleSchema)
-  .handler(async ({ data }) => deleteRole(data.key));
+export async function deleteRoleFn(input: { data: unknown }) {
+  const data = (deleteRoleSchema).parse(input.data);
+return deleteRole(data.key);
+}

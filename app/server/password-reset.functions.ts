@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
@@ -15,9 +16,9 @@ const resetPasswordSchema = z.object({
   password: z.string().min(6),
 });
 
-export const requestPasswordReset = createServerFn({ method: "POST" })
-  .validator(requestResetSchema)
-  .handler(async ({ data }) => {
+export async function requestPasswordReset(input: { data: unknown }) {
+  const data = (requestResetSchema).parse(input.data);
+
     const [user] = await db
       .select({ id: users.id, email: users.email })
       .from(users)
@@ -38,11 +39,11 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
     });
 
     return { token, email: user.email };
-  });
+}
 
-export const resetPasswordByToken = createServerFn({ method: "POST" })
-  .validator(resetPasswordSchema)
-  .handler(async ({ data }) => {
+export async function resetPasswordByToken(input: { data: unknown }) {
+  const data = (resetPasswordSchema).parse(input.data);
+
     const [reset] = await db
       .select()
       .from(passwordResets)
@@ -86,4 +87,4 @@ export const resetPasswordByToken = createServerFn({ method: "POST" })
       .where(eq(passwordResets.id, reset.id));
 
     return { ok: true };
-  });
+}

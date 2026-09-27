@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.6.0] - 2026-09-27
+
+### Changed
+
+- Began the Next.js migration: the app now builds and runs through Next.js
+  16.3.6 on React 19.3.0, with a Next App Router layout, Vercel-compatible
+  routing, and the mobile listing-fee Route Handler.
+- Converted marketplace server-function modules into Zod-validated Next.js
+  Server Actions and moved Supabase SSR cookie handling to Next's request
+  context. The existing TanStack client route tree remains as a compatibility
+  layer until individual screens are ported.
+
 ## [v1.5.0] - 2026-09-02
 
 ### Added

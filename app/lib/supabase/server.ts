@@ -1,64 +1,27 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-import {
-  getCookie,
-  setCookie,
-  deleteCookie,
-  getRequestHeader,
-} from "@tanstack/react-start/server";
+import { cookies } from "next/headers";
 import { env } from "../env";
 import type { Database } from "./database.types";
 
-function parseCookieHeader(header: string) {
-  return header.split(/;\s*/).flatMap((part) => {
-    const eq = part.indexOf("=");
-    if (eq === -1) return [];
-    return {
-      name: decodeURIComponent(part.slice(0, eq)),
-      value: decodeURIComponent(part.slice(eq + 1)),
-    };
-  });
-}
-
-export function getSupabaseServerClient() {
+export async function getSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
-        return parseCookieHeader(getRequestHeader("cookie") ?? "");
+        return cookieStore.getAll();
       },
       setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
         try {
           for (const { name, value, options } of cookiesToSet) {
-            setCookie(name, value, {
+            cookieStore.set(name, value, {
               ...options,
               sameSite: options?.sameSite ?? "lax",
             });
           }
         } catch {
-          // ignore if called outside a response context
-        }
-      },
-      get(name: string) {
-        return getCookie(name) ?? undefined;
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        try {
-          setCookie(name, value, {
-            ...options,
-            sameSite: options.sameSite ?? "lax",
-          });
-        } catch {
-          // ignore if called outside a response context
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          deleteCookie(name, {
-            ...options,
-            sameSite: options.sameSite ?? "lax",
-          });
-        } catch {
-          // ignore if called outside a response context
+          // Session cookies can only be changed in a Server Action or Route
+          // Handler; read-only Server Component rendering cannot refresh them.
         }
       },
     },

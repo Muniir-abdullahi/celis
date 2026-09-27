@@ -2,6 +2,10 @@
 
 ## Local Development
 
+The web app runs on Next.js 16 App Router. Set `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` alongside the existing
+server-only database and Supabase settings.
+
 Commands:
 
 ```bash

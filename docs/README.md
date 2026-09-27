@@ -17,4 +17,5 @@ Source of truth is code. Product source is `somalia-p2p-marketplace-prd.md`; des
 | `backend/waafi-payments.md` | Encrypted WaafiPay configuration and server-side purchase boundary |
 | `frontend/ui.md` | Routing, listing UI, admin UI, forms, dialogs, tables, design-system pointer |
 | `operations/runbook.md` | Local commands, migrations, seeding, storage, listing expiry cron |
+| `operations/nextjs-vercel.md` | Next.js migration status, Vercel settings, and required environment variables |
 | `plans/documentation-hardening.md` | Forward-looking documentation and refactor plan |

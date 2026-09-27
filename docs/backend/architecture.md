@@ -1,21 +1,25 @@
 # Backend Architecture
 
-This guide covers Celis server functions, Drizzle/Postgres, Supabase storage, validation, and errors.
+This guide covers Next.js Server Actions and Route Handlers, Drizzle/Postgres,
+Supabase storage, validation, and errors.
 
-## Server Functions
+## Server Actions and Route Handlers
 
 Server/data behavior lives under `app/server`.
 
 Patterns:
 
 - `*.server.ts` for data access and server-side operations.
-- `*.functions.ts` for server functions and mutations.
+- `*.functions.ts` for exported Next.js Server Actions (`"use server"`).
+- `app/api/**/route.ts` for HTTP integrations, mobile endpoints, and webhooks.
+- `app/lib/supabase/server.ts` reads and writes Supabase auth cookies through
+  Next.js `cookies()` in the action or route-handler request context.
 
 Rules:
 
 - Keep server files focused.
 - Split large server modules into query and mutation modules when needed.
-- Validate user input with Zod.
+- Validate every Server Action input with Zod, even when called by our own UI.
 - Enforce RBAC on the server.
 - Use transactions for multi-record writes.
 - Return only the data the UI needs.
@@ -67,7 +71,7 @@ Rules:
 
 - Use Zod for user input.
 - Validate route params, search params, and form data.
-- Keep validation close to the server function or shared when reused.
+- Keep validation close to the Server Action or shared when reused.
 - Return clear user-facing errors for recoverable marketplace actions.
 - Do not leak secrets, database internals, or stack traces.
 - Payment/payout errors need enough logging/audit context for support.

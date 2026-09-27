@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import { db } from "~/db";
 import { listingInteractions } from "~/db/schema";
@@ -11,9 +12,9 @@ const recordInteractionSchema = z.object({
   description: z.string().optional(),
 });
 
-export const recordListingInteraction = createServerFn({ method: "POST" })
-  .validator(recordInteractionSchema)
-  .handler(async ({ data }) => {
+export async function recordListingInteraction(input: { data: unknown }) {
+  const data = (recordInteractionSchema).parse(input.data);
+
     const user = await getCurrentUser();
     if (!user) {
       throw new Error("Unauthorized");
@@ -28,4 +29,4 @@ export const recordListingInteraction = createServerFn({ method: "POST" })
     });
 
     return { ok: true };
-  });
+}

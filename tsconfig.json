@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -15,10 +19,32 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": [
+        "./app/*"
+      ]
     },
-    "types": ["vite/client"]
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "incremental": true,
+    "esModuleInterop": true
   },
-  "include": ["app/**/*", "app/**/*.ts", "app/**/*.tsx"]
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "app/**/*",
+    "app/**/*.ts",
+    "app/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

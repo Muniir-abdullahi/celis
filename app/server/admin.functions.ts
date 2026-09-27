@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import type { UserRole } from "~/db/schema";
 import {
@@ -54,15 +55,15 @@ import { requirePermission } from "./auth.server";
 
 const userRoleSchema = z.string();
 
-export const fetchAdminStats = createServerFn({ method: "GET" }).handler(async () => {
-  return getAdminDashboardStats();
-});
+export async function fetchAdminStats() {
 
-export const fetchAdminRecentActivity = createServerFn({ method: "GET" }).handler(
-  async () => {
+  return getAdminDashboardStats();
+}
+
+export async function fetchAdminRecentActivity() {
+
     return getAdminRecentActivity();
-  }
-);
+}
 
 const usersQuerySchema = z
   .object({
@@ -74,11 +75,11 @@ const usersQuerySchema = z
   })
   .default({});
 
-export const fetchAdminUsers = createServerFn({ method: "GET" })
-  .validator(usersQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminUsers(input: { data: unknown }) {
+  const data = (usersQuerySchema).parse(input.data);
+
     return getAdminUsers(data);
-  });
+}
 
 const createInternalUserSchema = z.object({
   email: z.string().email(),
@@ -87,39 +88,39 @@ const createInternalUserSchema = z.object({
   department: z.string().optional(),
 });
 
-export const createAdminInternalUser = createServerFn({ method: "POST" })
-  .validator(createInternalUserSchema)
-  .handler(async ({ data }) => {
+export async function createAdminInternalUser(input: { data: unknown }) {
+  const data = (createInternalUserSchema).parse(input.data);
+
     return createInternalUser(data);
-  });
+}
 
 const updateRoleSchema = z.object({
   id: z.string().uuid(),
   role: userRoleSchema,
 });
 
-export const updateAdminUserRole = createServerFn({ method: "POST" })
-  .validator(updateRoleSchema)
-  .handler(async ({ data }) => {
+export async function updateAdminUserRole(input: { data: unknown }) {
+  const data = (updateRoleSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return updateUserRole(data.id, data.role as UserRole, user.id);
-  });
+}
 
 const userIdSchema = z.object({ id: z.string().uuid() });
 
-export const toggleAdminUserVerification = createServerFn({ method: "POST" })
-  .validator(userIdSchema)
-  .handler(async ({ data }) => {
-    return toggleUserVerification(data.id);
-  });
+export async function toggleAdminUserVerification(input: { data: unknown }) {
+  const data = (userIdSchema).parse(input.data);
 
-export const toggleAdminUserSuperAdmin = createServerFn({ method: "POST" })
-  .validator(userIdSchema)
-  .handler(async ({ data }) => {
+    return toggleUserVerification(data.id);
+}
+
+export async function toggleAdminUserSuperAdmin(input: { data: unknown }) {
+  const data = (userIdSchema).parse(input.data);
+
     return toggleUserSuperAdmin(data.id);
-  });
+}
 
 const unverifiedSellersQuerySchema = z
   .object({
@@ -130,11 +131,11 @@ const unverifiedSellersQuerySchema = z
   })
   .default({});
 
-export const fetchUnverifiedSellers = createServerFn({ method: "GET" })
-  .validator(unverifiedSellersQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchUnverifiedSellers(input: { data: unknown }) {
+  const data = (unverifiedSellersQuerySchema).parse(input.data);
+
     return getUnverifiedSellers(data);
-  });
+}
 
 const reviewSellerVerificationSchema = z.object({
   id: z.string().uuid(),
@@ -142,14 +143,14 @@ const reviewSellerVerificationSchema = z.object({
   reason: z.string().optional(),
 });
 
-export const reviewAdminSellerVerification = createServerFn({ method: "POST" })
-  .validator(reviewSellerVerificationSchema)
-  .handler(async ({ data }) => {
+export async function reviewAdminSellerVerification(input: { data: unknown }) {
+  const data = (reviewSellerVerificationSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return reviewSellerVerification(data.id, data.action, data.reason ?? "", user.id);
-  });
+}
 
 const listingsQuerySchema = z
   .object({
@@ -164,11 +165,11 @@ const listingsQuerySchema = z
   })
   .default({});
 
-export const fetchAdminListings = createServerFn({ method: "GET" })
-  .validator(listingsQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminListings(input: { data: unknown }) {
+  const data = (listingsQuerySchema).parse(input.data);
+
     return getAdminListings(data);
-  });
+}
 
 const listingStatusSchema = z.object({
   id: z.string().uuid(),
@@ -189,45 +190,45 @@ const extendExpirySchema = z.object({
   reason: z.string().min(1),
 });
 
-export const extendAdminListingExpiry = createServerFn({ method: "POST" })
-  .validator(extendExpirySchema)
-  .handler(async ({ data }) => {
+export async function extendAdminListingExpiry(input: { data: unknown }) {
+  const data = (extendExpirySchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return extendListingExpiry(data.id, data.days, data.reason, user.id);
-  });
+}
 
 const markListingPaidSchema = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(3).max(500),
 });
 
-export const markAdminListingPaid = createServerFn({ method: "POST" })
-  .validator(markListingPaidSchema)
-  .handler(async ({ data }) => {
+export async function markAdminListingPaid(input: { data: unknown }) {
+  const data = (markListingPaidSchema).parse(input.data);
+
     return markListingPaidManually(data.id, data.reason);
-  });
+}
 
 const notifySellerSchema = z.object({
   id: z.string().uuid(),
   channel: z.enum(["sms", "email", "push"]).default("sms"),
 });
 
-export const notifyAdminExpiringSeller = createServerFn({ method: "POST" })
-  .validator(notifySellerSchema)
-  .handler(async ({ data }) => {
+export async function notifyAdminExpiringSeller(input: { data: unknown }) {
+  const data = (notifySellerSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return notifyExpiringSeller(data.id, data.channel, user.id);
-  });
+}
 
-export const updateAdminListingStatus = createServerFn({ method: "POST" })
-  .validator(listingStatusSchema)
-  .handler(async ({ data }) => {
+export async function updateAdminListingStatus(input: { data: unknown }) {
+  const data = (listingStatusSchema).parse(input.data);
+
     return updateListingStatus(data.id, data.status);
-  });
+}
 
 const reviewListingSchema = z.object({
   id: z.string().uuid(),
@@ -235,9 +236,9 @@ const reviewListingSchema = z.object({
   reason: z.string().optional(),
 });
 
-export const reviewAdminListing = createServerFn({ method: "POST" })
-  .validator(reviewListingSchema)
-  .handler(async ({ data }) => {
+export async function reviewAdminListing(input: { data: unknown }) {
+  const data = (reviewListingSchema).parse(input.data);
+
     const { requirePermission } = await import("./auth.server");
     const user = await requirePermission("listings:moderate");
     const { insertAuditLog } = await import("./audit.server");
@@ -259,7 +260,7 @@ export const reviewAdminListing = createServerFn({ method: "POST" })
       metadata: { actorId: user.id, reason: data.reason },
     });
     return { success: true, id: data.id, status: "rejected" as const };
-  });
+}
 
 const categoriesQuerySchema = z
   .object({
@@ -269,11 +270,11 @@ const categoriesQuerySchema = z
   })
   .default({});
 
-export const fetchAdminCategories = createServerFn({ method: "GET" })
-  .validator(categoriesQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminCategories(input: { data: unknown }) {
+  const data = (categoriesQuerySchema).parse(input.data);
+
     return getAdminCategories(data);
-  });
+}
 
 const categorySchema = z.object({
   name: z.string().min(1).max(100),
@@ -282,11 +283,11 @@ const categorySchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
-export const createAdminCategory = createServerFn({ method: "POST" })
-  .validator(categorySchema)
-  .handler(async ({ data }) => {
+export async function createAdminCategory(input: { data: unknown }) {
+  const data = (categorySchema).parse(input.data);
+
     return createCategory(data);
-  });
+}
 
 const updateCategorySchema = z.object({
   id: z.string().uuid(),
@@ -296,45 +297,45 @@ const updateCategorySchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const updateAdminCategory = createServerFn({ method: "POST" })
-  .validator(updateCategorySchema)
-  .handler(async ({ data }) => {
+export async function updateAdminCategory(input: { data: unknown }) {
+  const data = (updateCategorySchema).parse(input.data);
+
     return updateCategory(data.id, {
       name: data.name,
       slug: data.slug,
       sortOrder: data.sortOrder,
       isActive: data.isActive,
     });
-  });
+}
 
 const reorderCategorySchema = z.object({
   id: z.string().uuid(),
   direction: z.enum(["up", "down"]),
 });
 
-export const reorderAdminCategory = createServerFn({ method: "POST" })
-  .validator(reorderCategorySchema)
-  .handler(async ({ data }) => {
+export async function reorderAdminCategory(input: { data: unknown }) {
+  const data = (reorderCategorySchema).parse(input.data);
+
     return reorderCategory(data.id, data.direction);
-  });
+}
 
 const deleteCategorySchema = z.object({ id: z.string().uuid() });
 
-export const deleteAdminCategory = createServerFn({ method: "POST" })
-  .validator(deleteCategorySchema)
-  .handler(async ({ data }) => {
+export async function deleteAdminCategory(input: { data: unknown }) {
+  const data = (deleteCategorySchema).parse(input.data);
+
     return deleteCategory(data.id);
-  });
+}
 
 const categoryFeesQuerySchema = z.object({
   categoryId: z.string().uuid(),
 });
 
-export const fetchAdminCategoryFees = createServerFn({ method: "GET" })
-  .validator(categoryFeesQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminCategoryFees(input: { data: unknown }) {
+  const data = (categoryFeesQuerySchema).parse(input.data);
+
     return getAdminCategoryFees(data.categoryId);
-  });
+}
 
 const categoryFeeSchema = z.object({
   categoryId: z.string().uuid(),
@@ -346,9 +347,9 @@ const categoryFeeSchema = z.object({
   effectiveUntil: z.string().datetime().optional(),
 });
 
-export const createAdminCategoryFee = createServerFn({ method: "POST" })
-  .validator(categoryFeeSchema)
-  .handler(async ({ data }) => {
+export async function createAdminCategoryFee(input: { data: unknown }) {
+  const data = (categoryFeeSchema).parse(input.data);
+
     return createCategoryFee({
       categoryId: data.categoryId,
       feeType: data.feeType,
@@ -358,31 +359,31 @@ export const createAdminCategoryFee = createServerFn({ method: "POST" })
       effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : undefined,
       effectiveUntil: data.effectiveUntil ? new Date(data.effectiveUntil) : undefined,
     });
-  });
+}
 
 const updateCategoryFeeSchema = categoryFeeSchema
   .omit({ categoryId: true })
   .partial()
   .extend({ id: z.string().uuid() });
 
-export const updateAdminCategoryFee = createServerFn({ method: "POST" })
-  .validator(updateCategoryFeeSchema)
-  .handler(async ({ data }) => {
+export async function updateAdminCategoryFee(actionInput: { data: unknown }) {
+  const data = (updateCategoryFeeSchema).parse(actionInput.data);
+
     const { id, ...input } = data;
     return updateCategoryFee(id, {
       ...input,
       effectiveFrom: input.effectiveFrom ? new Date(input.effectiveFrom) : null,
       effectiveUntil: input.effectiveUntil ? new Date(input.effectiveUntil) : null,
     });
-  });
+}
 
 const categoryFeeIdSchema = z.object({ id: z.string().uuid() });
 
-export const deleteAdminCategoryFee = createServerFn({ method: "POST" })
-  .validator(categoryFeeIdSchema)
-  .handler(async ({ data }) => {
+export async function deleteAdminCategoryFee(input: { data: unknown }) {
+  const data = (categoryFeeIdSchema).parse(input.data);
+
     return deleteCategoryFee(data.id);
-  });
+}
 
 const ordersQuerySchema = z
   .object({
@@ -392,11 +393,11 @@ const ordersQuerySchema = z
   })
   .default({});
 
-export const fetchAdminOrders = createServerFn({ method: "GET" })
-  .validator(ordersQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminOrders(input: { data: unknown }) {
+  const data = (ordersQuerySchema).parse(input.data);
+
     return getAdminOrders(data);
-  });
+}
 
 const orderStatusSchema = z.object({
   id: z.string().uuid(),
@@ -411,11 +412,11 @@ const orderStatusSchema = z.object({
   ]),
 });
 
-export const updateAdminOrderStatus = createServerFn({ method: "POST" })
-  .validator(orderStatusSchema)
-  .handler(async ({ data }) => {
+export async function updateAdminOrderStatus(input: { data: unknown }) {
+  const data = (orderStatusSchema).parse(input.data);
+
     return updateOrderStatus(data.id, data.status);
-  });
+}
 
 const createOrderSchema = z.object({
   listingId: z.string().uuid(),
@@ -423,9 +424,9 @@ const createOrderSchema = z.object({
   salePrice: z.coerce.number().int().min(0),
 });
 
-export const createAdminOrder = createServerFn({ method: "POST" })
-  .validator(createOrderSchema)
-  .handler(async ({ data }) => {
+export async function createAdminOrder(input: { data: unknown }) {
+  const data = (createOrderSchema).parse(input.data);
+
     await requirePermission("orders:manage");
     const { db } = await import("~/db");
     const { users, listings } = await import("~/db/schema");
@@ -452,7 +453,7 @@ export const createAdminOrder = createServerFn({ method: "POST" })
       sellerId: listing.sellerId,
       salePrice: data.salePrice,
     });
-  });
+}
 
 const payoutsQuerySchema = z
   .object({
@@ -462,28 +463,28 @@ const payoutsQuerySchema = z
   })
   .default({});
 
-export const fetchAdminPayouts = createServerFn({ method: "GET" })
-  .validator(payoutsQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminPayouts(input: { data: unknown }) {
+  const data = (payoutsQuerySchema).parse(input.data);
+
     return getAdminPayouts(data);
-  });
+}
 
 const payoutActionSchema = z.object({
   id: z.string().uuid(),
   note: z.string().optional(),
 });
 
-export const retryAdminPayout = createServerFn({ method: "POST" })
-  .validator(payoutActionSchema)
-  .handler(async ({ data }) => {
-    return retryPayout(data.id);
-  });
+export async function retryAdminPayout(input: { data: unknown }) {
+  const data = (payoutActionSchema).parse(input.data);
 
-export const completeAdminPayout = createServerFn({ method: "POST" })
-  .validator(payoutActionSchema)
-  .handler(async ({ data }) => {
+    return retryPayout(data.id);
+}
+
+export async function completeAdminPayout(input: { data: unknown }) {
+  const data = (payoutActionSchema).parse(input.data);
+
     return markPayoutCompleted(data.id, data.note);
-  });
+}
 
 const ledgerQuerySchema = z
   .object({
@@ -495,17 +496,17 @@ const ledgerQuerySchema = z
   })
   .default({ type: "all" as const });
 
-export const fetchAdminLedger = createServerFn({ method: "GET" })
-  .validator(ledgerQuerySchema)
-  .handler(async ({ data }) => {
-    return getAdminLedger(data);
-  });
+export async function fetchAdminLedger(input: { data: unknown }) {
+  const data = (ledgerQuerySchema).parse(input.data);
 
-export const exportAdminLedgerCsv = createServerFn({ method: "GET" })
-  .validator(ledgerQuerySchema)
-  .handler(async ({ data }) => {
+    return getAdminLedger(data);
+}
+
+export async function exportAdminLedgerCsv(input: { data: unknown }) {
+  const data = (ledgerQuerySchema).parse(input.data);
+
     return exportAdminLedger(data);
-  });
+}
 
 const failedPaymentsBaseSchema = z.object({
   from: z.string().optional(),
@@ -518,17 +519,17 @@ const failedPaymentsQuerySchema = failedPaymentsBaseSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).optional().default(10),
 });
 
-export const fetchFailedPaymentsReport = createServerFn({ method: "GET" })
-  .validator(failedPaymentsQuerySchema)
-  .handler(async ({ data }) => {
-    return getFailedPaymentsReport(data);
-  });
+export async function fetchFailedPaymentsReport(input: { data: unknown }) {
+  const data = (failedPaymentsQuerySchema).parse(input.data);
 
-export const exportFailedPaymentsReportCsv = createServerFn({ method: "GET" })
-  .validator(failedPaymentsBaseSchema)
-  .handler(async ({ data }) => {
+    return getFailedPaymentsReport(data);
+}
+
+export async function exportFailedPaymentsReportCsv(input: { data: unknown }) {
+  const data = (failedPaymentsBaseSchema).parse(input.data);
+
     return exportFailedPaymentsReport(data);
-  });
+}
 
 const dateRangeBaseSchema = z.object({
   from: z.string().optional(),
@@ -540,61 +541,60 @@ const dateRangeQuerySchema = dateRangeBaseSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).optional().default(10),
 });
 
-export const fetchNewUsersReport = createServerFn({ method: "GET" })
-  .validator(dateRangeQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchNewUsersReport(input: { data: unknown }) {
+  const data = (dateRangeQuerySchema).parse(input.data);
+
     return getNewUsersReport(data);
-  });
+}
 
-export const exportNewUsersReportCsv = createServerFn({ method: "GET" })
-  .validator(dateRangeBaseSchema)
-  .handler(async ({ data }) => {
+export async function exportNewUsersReportCsv(input: { data: unknown }) {
+  const data = (dateRangeBaseSchema).parse(input.data);
+
     return exportNewUsersReport(data);
-  });
+}
 
-export const fetchNewListingsReport = createServerFn({ method: "GET" })
-  .validator(dateRangeQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchNewListingsReport(input: { data: unknown }) {
+  const data = (dateRangeQuerySchema).parse(input.data);
+
     return getNewListingsReport(data);
-  });
+}
 
-export const exportNewListingsReportCsv = createServerFn({ method: "GET" })
-  .validator(dateRangeBaseSchema)
-  .handler(async ({ data }) => {
+export async function exportNewListingsReportCsv(input: { data: unknown }) {
+  const data = (dateRangeBaseSchema).parse(input.data);
+
     return exportNewListingsReport(data);
-  });
+}
 
 const auditLogQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(25),
 });
 
-export const fetchAdminAuditLogs = createServerFn({ method: "GET" })
-  .validator(auditLogQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchAdminAuditLogs(input: { data: unknown }) {
+  const data = (auditLogQuerySchema).parse(input.data);
+
     await requirePermission("audit:read");
     return getAdminAuditLogs(data);
-  });
+}
 
-export const fetchPlatformConfigAll = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchPlatformConfigAll() {
+
     return getPlatformConfigAll();
-  }
-);
+}
 
 const platformConfigSectionSchema = z.object({
   section: z.enum(["fees", "features", "pricing", "audit"]),
 });
 
-export const fetchPlatformConfigSection = createServerFn({ method: "GET" })
-  .validator(platformConfigSectionSchema)
-  .handler(async ({ data }) => getPlatformConfigSection(data.section));
+export async function fetchPlatformConfigSection(input: { data: unknown }) {
+  const data = (platformConfigSectionSchema).parse(input.data);
+return getPlatformConfigSection(data.section);
+}
 
-export const runAdminExpirySweep = createServerFn({ method: "POST" }).handler(
-  async () => {
+export async function runAdminExpirySweep() {
+
     return runListingExpirySweep();
-  }
-);
+}
 
 const updateConfigSchema = z.object({
   key: z.string(),
@@ -603,9 +603,9 @@ const updateConfigSchema = z.object({
   effectiveUntil: z.string().datetime().optional(),
 });
 
-export const updateAdminPlatformConfig = createServerFn({ method: "POST" })
-  .validator(updateConfigSchema)
-  .handler(async ({ data }) => {
+export async function updateAdminPlatformConfig(input: { data: unknown }) {
+  const data = (updateConfigSchema).parse(input.data);
+
     // adminId will be resolved inside the server function via requireAdmin
     const { getCurrentUser } = await import("./auth.server");
     const admin = await getCurrentUser();
@@ -617,7 +617,7 @@ export const updateAdminPlatformConfig = createServerFn({ method: "POST" })
       data.effectiveFrom ? new Date(data.effectiveFrom) : undefined,
       data.effectiveUntil ? new Date(data.effectiveUntil) : undefined
     );
-  });
+}
 
 const packageSchema = z.object({
   code: z.string().min(1).max(60),
@@ -634,58 +634,55 @@ const packageSchema = z.object({
   gracePeriodDays: z.coerce.number().int().min(0).optional(),
 });
 
-export const fetchAdminListingPackages = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchAdminListingPackages() {
+
     await requirePermission("settings:manage");
     return listAllListingPackages();
-  }
-);
+}
 
-export const createAdminListingPackage = createServerFn({ method: "POST" })
-  .validator(packageSchema)
-  .handler(async ({ data }) => {
+export async function createAdminListingPackage(input: { data: unknown }) {
+  const data = (packageSchema).parse(input.data);
+
     await requirePermission("settings:manage");
     const { createListingPackage } = await import("./seller-packages.server");
     return createListingPackage(data);
-  });
+}
 
-export const updateAdminListingPackage = createServerFn({ method: "POST" })
-  .validator(
-    packageSchema.partial().extend({
+export async function updateAdminListingPackage(actionInput: { data: unknown }) {
+  const data = (packageSchema.partial().extend({
       id: z.string().uuid(),
       isActive: z.boolean().optional(),
-    })
-  )
-  .handler(async ({ data }) => {
+    })).parse(actionInput.data);
+
     await requirePermission("settings:manage");
     const { id, ...input } = data;
     const { updateListingPackage } = await import("./seller-packages.server");
     return updateListingPackage(id, input);
-  });
+}
 
 const listingPackageIdSchema = z.object({ id: z.string().uuid() });
 
-export const archiveAdminListingPackage = createServerFn({ method: "POST" })
-  .validator(listingPackageIdSchema)
-  .handler(async ({ data }) => {
+export async function archiveAdminListingPackage(input: { data: unknown }) {
+  const data = (listingPackageIdSchema).parse(input.data);
+
     await requirePermission("settings:manage");
     const { archiveListingPackage } = await import("./seller-packages.server");
     return archiveListingPackage(data.id);
-  });
+}
 
-export const deleteAdminListingPackage = createServerFn({ method: "POST" })
-  .validator(listingPackageIdSchema)
-  .handler(async ({ data }) => {
+export async function deleteAdminListingPackage(input: { data: unknown }) {
+  const data = (listingPackageIdSchema).parse(input.data);
+
     await requirePermission("settings:manage");
     const { deleteListingPackage } = await import("./seller-packages.server");
     return deleteListingPackage(data.id);
-  });
+}
 
 const sellerNumberSchema = z.object({ sellerNumber: z.string().min(1).max(20) });
 
-export const fetchSellerByNumber = createServerFn({ method: "GET" })
-  .validator(sellerNumberSchema)
-  .handler(async ({ data }) => {
+export async function fetchSellerByNumber(input: { data: unknown }) {
+  const data = (sellerNumberSchema).parse(input.data);
+
     await requirePermission("users:manage");
     const { db } = await import("~/db");
     const { users, profiles } = await import("~/db/schema");
@@ -720,7 +717,7 @@ export const fetchSellerByNumber = createServerFn({ method: "GET" })
       verificationStatus: seller.verificationStatus,
       isVerified: seller.verifiedAt !== null,
     };
-  });
+}
 
 const assignPackageSchema = z.object({
   sellerEmail: z.string().email().optional(),
@@ -731,9 +728,9 @@ const assignPackageSchema = z.object({
   pricePaidCents: z.coerce.number().int().min(0).optional(),
 });
 
-export const assignAdminSellerPackage = createServerFn({ method: "POST" })
-  .validator(assignPackageSchema)
-  .handler(async ({ data }) => {
+export async function assignAdminSellerPackage(input: { data: unknown }) {
+  const data = (assignPackageSchema).parse(input.data);
+
     await requirePermission("users:manage");
     const { db } = await import("~/db");
     const { users, profiles } = await import("~/db/schema");
@@ -778,4 +775,4 @@ export const assignAdminSellerPackage = createServerFn({ method: "POST" })
       paymentReference: data.paymentReference,
       pricePaidCents: data.pricePaidCents,
     });
-  });
+}

@@ -45,6 +45,17 @@ This specification adapts a modern peer-to-peer marketplace platform for the Som
 | Payouts | Bank Transfer APIs | Local Somali bank integration |
 | UI Components | shadcn/ui | Accessible, composable React components built on Radix UI primitives |
 
+### Implementation Stack Update (September 2026)
+
+The original framework target above has been superseded by the Next.js
+migration: Next.js 16 App Router with React 19.3 is the deployment target for
+Vercel. Drizzle ORM, Supabase, Tailwind CSS, and the marketplace domain rules
+remain in place. The old TanStack Start comparisons and examples below are
+historical design context; current implementation guidance lives in
+`docs/frontend/ui.md`, `docs/backend/architecture.md`, and
+`docs/operations/nextjs-vercel.md`. Screen routes are still being moved out of
+the temporary TanStack client-router compatibility layer.
+
 ## Monetization Models
 
 1. **Fixed Rate (Xawaalad):** Flat fee paid by the seller via mobile money wallet (EVC/eDahab/Premier) to list a premium or high-visibility item. Default: $5.

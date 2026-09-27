@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   getRootCategories,
@@ -32,7 +33,8 @@ export type CategoryConditionItem = {
   sortOrder: number;
 };
 
-export const listCategories = createServerFn({ method: "GET" }).handler(async () => {
+export async function listCategories() {
+
   const rows = await getRootCategories();
   return rows.map<CategoryListItem>((c) => ({
     id: c.id,
@@ -43,13 +45,13 @@ export const listCategories = createServerFn({ method: "GET" }).handler(async ()
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   }));
-});
+}
 
 const parentCategoryIdSchema = z.object({ parentId: z.string().uuid() });
 
-export const listChildCategories = createServerFn({ method: "GET" })
-  .validator(parentCategoryIdSchema)
-  .handler(async ({ data }) => {
+export async function listChildCategories(input: { data: unknown }) {
+  const data = (parentCategoryIdSchema).parse(input.data);
+
     const rows = await getChildCategories(data.parentId);
     return rows.map<CategoryListItem>((c) => ({
       id: c.id,
@@ -60,25 +62,23 @@ export const listChildCategories = createServerFn({ method: "GET" })
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     }));
-  });
+}
 
-export const fetchCategoryCounts = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchCategoryCounts() {
+
     return getCategoryCounts();
-  }
-);
+}
 
-export const fetchPriceRange = createServerFn({ method: "GET" }).handler(
-  async () => {
+export async function fetchPriceRange() {
+
     return getMinMaxPrices();
-  }
-);
+}
 
 const categoryIdSchema = z.object({ categoryId: z.string().uuid() });
 
-export const fetchCategoryConditions = createServerFn({ method: "GET" })
-  .validator(categoryIdSchema)
-  .handler(async ({ data }) => {
+export async function fetchCategoryConditions(input: { data: unknown }) {
+  const data = (categoryIdSchema).parse(input.data);
+
     const rows = await getCategoryConditionsDb(data.categoryId);
     return rows.map<CategoryConditionItem>((r) => ({
       code: r.code,
@@ -86,7 +86,7 @@ export const fetchCategoryConditions = createServerFn({ method: "GET" })
       description: r.description,
       sortOrder: r.sortOrder,
     }));
-  });
+}
 
 const saveConditionsSchema = z.object({
   categoryId: z.string().uuid(),
@@ -101,9 +101,9 @@ const saveConditionsSchema = z.object({
   ),
 });
 
-export const saveCategoryConditions = createServerFn({ method: "POST" })
-  .validator(saveConditionsSchema)
-  .handler(async ({ data }) => {
+export async function saveCategoryConditions(input: { data: unknown }) {
+  const data = (saveConditionsSchema).parse(input.data);
+
     await requirePermission("categories:manage");
     await db.transaction(async (tx) => {
       await tx
@@ -123,13 +123,13 @@ export const saveCategoryConditions = createServerFn({ method: "POST" })
       }
     });
     return { success: true };
-  });
+}
 
-export const fetchCategoryMetadataSchema = createServerFn({ method: "GET" })
-  .validator(categoryIdSchema)
-  .handler(async ({ data }) => {
+export async function fetchCategoryMetadataSchema(input: { data: unknown }) {
+  const data = (categoryIdSchema).parse(input.data);
+
     return getCategoryMetadataSchema(data.categoryId);
-  });
+}
 
 const saveMetadataSchemaValidator = z.object({
   categoryId: z.string().uuid(),
@@ -146,10 +146,10 @@ const saveMetadataSchemaValidator = z.object({
   }),
 });
 
-export const saveCategoryMetadataSchema = createServerFn({ method: "POST" })
-  .validator(saveMetadataSchemaValidator)
-  .handler(async ({ data }) => {
+export async function saveCategoryMetadataSchema(input: { data: unknown }) {
+  const data = (saveMetadataSchemaValidator).parse(input.data);
+
     await requirePermission("categories:manage");
     await updateCategoryMetadataSchema(data.categoryId, data.schema as CategoryMetadataSchema);
     return { success: true };
-  });
+}

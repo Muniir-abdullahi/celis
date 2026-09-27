@@ -1,14 +1,30 @@
 # Frontend UI
 
-This guide covers TanStack routing/pages, listing UI, admin UI, forms, dialogs, tables, and the design-system pointer.
+This guide covers the Next.js deployment shell, the existing client route tree,
+listing UI, admin UI, forms, dialogs, tables, and the design-system pointer.
+
+## Next.js Migration Status
+
+- Vercel and local `dev`/`build`/`start` commands now use Next.js 16 App Router.
+- `app/layout.tsx` owns the document shell and global stylesheet.
+- `app/[[...segments]]/page.tsx` currently mounts the existing client router so
+  marketplace screens remain available while they are migrated to App Router
+  pages. Do not add business routes to that catch-all as the end state.
+- TanStack Router and `app/routeTree.gen.ts` are transitional. Do not edit the
+  generated route tree manually; remove it only when all screen routes have
+  moved to Next.js.
+- Next public Supabase settings use `NEXT_PUBLIC_SUPABASE_URL` and
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Keep service-role and provider secrets
+  server-only.
 
 ## Routing & Pages
 
 Key files:
 
-- `app/router.tsx`
-- `app/routes/**`
-- `app/routeTree.gen.ts`
+- `app/layout.tsx`
+- `app/api/**/route.ts`
+- `app/[[...segments]]/page.tsx` (temporary compatibility router)
+- `app/router.tsx` and `app/routes/**` (transitional)
 
 Rules:
 

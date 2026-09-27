@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import { listingSchema } from "~/lib/validation";
 import {
@@ -34,16 +35,17 @@ const submitShopSchema = z.object({
   sellerId: z.string().uuid(),
 });
 
-export const fetchSellerListingEligibility = createServerFn({ method: "GET" })
-  .validator(z.object({ sellerId: z.string().uuid() }))
-  .handler(async ({ data }) => getSellerListingEligibility(data.sellerId));
+export async function fetchSellerListingEligibility(input: { data: unknown }) {
+  const data = (z.object({ sellerId: z.string().uuid() })).parse(input.data);
+return getSellerListingEligibility(data.sellerId);
+}
 
-export const submitShopListing = createServerFn({ method: "POST" })
-  .validator(submitShopSchema)
-  .handler(async ({ data }) => {
+export async function submitShopListing(input: { data: unknown }) {
+  const data = (submitShopSchema).parse(input.data);
+
     await submitShopListingForReview(data.listingId, data.sellerId);
     return { success: true, id: data.listingId };
-  });
+}
 
 const shopSlugSchema = z.object({
   shopSlug: z.string().min(1),
@@ -51,28 +53,27 @@ const shopSlugSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(24),
 });
 
-export const fetchShopListings = createServerFn({ method: "GET" })
-  .validator(shopSlugSchema)
-  .handler(async ({ data }) => {
+export async function fetchShopListings(input: { data: unknown }) {
+  const data = (shopSlugSchema).parse(input.data);
+
     const { getShopListings } = await import("./listings.server");
     return getShopListings(data.shopSlug, {
       page: data.page,
       limit: data.limit,
     });
-  });
+}
 
-export const fetchCurrentSellerSubscription = createServerFn({
-  method: "GET",
-}).handler(async () => {
+export async function fetchCurrentSellerSubscription() {
+
   const { getCurrentUser } = await import("./auth.server");
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
   return getCurrentSellerSubscription(user.id);
-});
+}
 
-export const createListing = createServerFn({ method: "POST" })
-  .validator(createListingSchema)
-  .handler(async ({ data }) => {
+export async function createListing(input: { data: unknown }) {
+  const data = (createListingSchema).parse(input.data);
+
     await requireSeller(data.sellerId);
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
@@ -105,27 +106,27 @@ export const createListing = createServerFn({ method: "POST" })
       feeCents: pricing.totalFeeCents,
       expiresAt: pricing.expiresAt.toISOString(),
     };
-  });
+}
 
 const listingIdSchema = z.object({ id: z.string().uuid() });
 
-export const fetchListingById = createServerFn({ method: "GET" })
-  .validator(listingIdSchema)
-  .handler(async ({ data }) => {
+export async function fetchListingById(input: { data: unknown }) {
+  const data = (listingIdSchema).parse(input.data);
+
     return getListingById(data.id);
-  });
+}
 
 const similarListingsSchema = z.object({
   listingId: z.string().uuid(),
   categoryId: z.string().uuid(),
 });
 
-export const fetchSimilarListings = createServerFn({ method: "GET" })
-  .validator(similarListingsSchema)
-  .handler(async ({ data }) => {
+export async function fetchSimilarListings(input: { data: unknown }) {
+  const data = (similarListingsSchema).parse(input.data);
+
     const { getSimilarListings } = await import("./listings.server");
     return getSimilarListings(data.listingId, data.categoryId);
-  });
+}
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -139,81 +140,80 @@ const searchSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
-export const fetchListings = createServerFn({ method: "GET" })
-  .validator(searchSchema)
-  .handler(async ({ data }) => {
-    return searchListings(data as SearchListingsFilters);
-  });
+export async function fetchListings(input: { data: unknown }) {
+  const data = (searchSchema).parse(input.data);
 
-export const fetchFeaturedListings = createServerFn({ method: "GET" }).handler(
-  async () => {
+    return searchListings(data as SearchListingsFilters);
+}
+
+export async function fetchFeaturedListings() {
+
     return getFeaturedListings(8);
-  }
-);
+}
 
 const sellerListingsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(10),
 });
 
-export const fetchSellerListings = createServerFn({ method: "GET" })
-  .validator(sellerListingsQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchSellerListings(input: { data: unknown }) {
+  const data = (sellerListingsQuerySchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     return getSellerListings(user.id, data);
-  });
+}
 
 const listingActionSchema = z.object({ id: z.string().uuid() });
 
-export const removeListing = createServerFn({ method: "POST" })
-  .validator(listingActionSchema)
-  .handler(async ({ data }) => {
+export async function removeListing(input: { data: unknown }) {
+  const data = (listingActionSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const deleted = await deleteListing(data.id, user.id);
     return { success: !!deleted, id: deleted?.id };
-  });
+}
 
-export const deactivateSellerListing = createServerFn({ method: "POST" })
-  .validator(listingActionSchema)
-  .handler(async ({ data }) => {
+export async function deactivateSellerListing(input: { data: unknown }) {
+  const data = (listingActionSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const updated = await deactivateListing(data.id, user.id);
     return { success: !!updated, id: updated?.id, status: updated?.status };
-  });
+}
 
-export const reactivateSellerListing = createServerFn({ method: "POST" })
-  .validator(listingActionSchema)
-  .handler(async ({ data }) => {
+export async function reactivateSellerListing(input: { data: unknown }) {
+  const data = (listingActionSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const updated = await reactivateListing(data.id, user.id);
     return { success: !!updated, id: updated?.id, status: updated?.status };
-  });
+}
 
 const markSoldSchema = z.object({ id: z.string().uuid(), orderId: z.string().uuid().optional() });
 
-export const markSellerListingSold = createServerFn({ method: "POST" })
-  .validator(markSoldSchema)
-  .handler(async ({ data }) => {
+export async function markSellerListingSold(input: { data: unknown }) {
+  const data = (markSoldSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const updated = await markListingAsSold(data.id, user.id, data.orderId);
     return { success: !!updated, id: updated?.id, status: updated?.status };
-  });
+}
 
-export const fetchListingReviews = createServerFn({ method: "GET" })
-  .validator(listingIdSchema)
-  .handler(async ({ data }) => {
+export async function fetchListingReviews(input: { data: unknown }) {
+  const data = (listingIdSchema).parse(input.data);
+
     return getListingReviews(data.id);
-  });
+}
 
 const createReviewSchema = z.object({
   listingId: z.string().uuid(),
@@ -221,9 +221,9 @@ const createReviewSchema = z.object({
   comment: z.string().max(500).optional(),
 });
 
-export const createListingReview = createServerFn({ method: "POST" })
-  .validator(createReviewSchema)
-  .handler(async ({ data }) => {
+export async function createListingReview(input: { data: unknown }) {
+  const data = (createReviewSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
@@ -233,4 +233,4 @@ export const createListingReview = createServerFn({ method: "POST" })
       rating: data.rating,
       comment: data.comment,
     });
-  });
+}

@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   initiateWalletPayment,
@@ -53,9 +54,9 @@ const initiateSchema = z.object({
   idempotencyKey: z.string().min(16).max(160).optional(),
 });
 
-export const initiatePayment = createServerFn({ method: "POST" })
-  .validator(initiateSchema)
-  .handler(async ({ data }) => {
+export async function initiatePayment(input: { data: unknown }) {
+  const data = (initiateSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
@@ -118,18 +119,18 @@ export const initiatePayment = createServerFn({ method: "POST" })
     }
 
     return result;
-  });
+}
 
 const statusSchema = z.object({ merchantRef: z.string().min(1) });
 
-export const getPaymentStatus = createServerFn({ method: "GET" })
-  .validator(statusSchema)
-  .handler(async ({ data }) => {
+export async function getPaymentStatus(input: { data: unknown }) {
+  const data = (statusSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const payment = await getWalletPaymentByMerchantRef(data.merchantRef);
     if (payment && payment.userId !== user.id) throw new Error("Forbidden");
     return payment ? serializeWalletPayment(payment) : null;
-  });
+}
 

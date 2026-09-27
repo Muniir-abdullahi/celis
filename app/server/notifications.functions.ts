@@ -1,4 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
+"use server";
+
 import { z } from "zod";
 import {
   getNotificationsForUser,
@@ -55,9 +56,9 @@ const notificationsQuerySchema = z.object({
   unreadOnly: z.coerce.boolean().optional().default(false),
 });
 
-export const fetchNotifications = createServerFn({ method: "GET" })
-  .validator(notificationsQuerySchema)
-  .handler(async ({ data }) => {
+export async function fetchNotifications(input: { data: unknown }) {
+  const data = (notificationsQuerySchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
@@ -69,34 +70,32 @@ export const fetchNotifications = createServerFn({ method: "GET" })
       limit: result.limit,
       totalPages: result.totalPages,
     };
-  });
+}
 
-export const fetchUnreadNotificationCount = createServerFn({
-  method: "GET",
-}).handler(async () => {
+export async function fetchUnreadNotificationCount() {
+
   const { getCurrentUser } = await import("./auth.server");
   const user = await getCurrentUser();
   if (!user) return 0;
   return getUnreadNotificationCount(user.id);
-});
+}
 
 const notificationIdSchema = z.object({ id: z.string().uuid() });
 
-export const markNotificationReadFn = createServerFn({ method: "POST" })
-  .validator(notificationIdSchema)
-  .handler(async ({ data }) => {
+export async function markNotificationReadFn(input: { data: unknown }) {
+  const data = (notificationIdSchema).parse(input.data);
+
     const { getCurrentUser } = await import("./auth.server");
     const user = await getCurrentUser();
     if (!user) throw new Error("Unauthorized");
     const row = await markNotificationRead(user.id, data.id);
     return row ? mapNotification(row) : null;
-  });
+}
 
-export const markAllNotificationsReadFn = createServerFn({
-  method: "POST",
-}).handler(async () => {
+export async function markAllNotificationsReadFn() {
+
   const { getCurrentUser } = await import("./auth.server");
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
   return markAllNotificationsRead(user.id);
-});
+}
