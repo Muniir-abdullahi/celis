@@ -1,0 +1,246 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { fetchAdminOrders } from "~/server/admin.functions";
+import { Card, CardContent } from "~/components/ui/card";
+import { Combobox } from "~/components/ui/combobox";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "~/components/ui/dialog";
+import { Pagination } from "~/components/ui/pagination";
+import { AdminTable } from "~/components/admin/admin-table";
+import { PageHeader } from "~/components/admin/page-header";
+import { OrderStatusBadge } from "~/components/admin/status-badge";
+import {
+  updateAdminOrderStatus,
+  createAdminOrder,
+} from "~/server/admin.functions";
+import { formatPrice, formatRelativeDate } from "~/lib/format";
+
+type OrdersData = Awaited<ReturnType<typeof fetchAdminOrders>>;
+const STATUSES = [
+  "pending",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "completed",
+  "cancelled",
+  "disputed",
+];
+
+export function OrdersContent({ data, initialStatus }: { data: OrdersData; initialStatus: string }) {
+  const { items, page, totalPages } = data;
+  const router = useRouter();
+  const [status, setStatus] = useState<string>(initialStatus);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const statusOptions = [
+    { value: "", label: "All statuses" },
+    ...STATUSES.map((s) => ({ value: s, label: s })),
+  ];
+  const rowStatusOptions = statusOptions.filter((option) => option.value);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    listingId: "",
+    buyerEmail: "",
+    salePrice: "",
+  });
+  const [createLoading, setCreateLoading] = useState(false);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateLoading(true);
+    try {
+      await createAdminOrder({
+        data: {
+          listingId: createForm.listingId,
+          buyerEmail: createForm.buyerEmail,
+          salePrice: Number(createForm.salePrice),
+        },
+      });
+      setCreateForm({ listingId: "", buyerEmail: "", salePrice: "" });
+      setCreateOpen(false);
+      router.refresh();
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (id: string, next: string) => {
+    setLoadingId(id);
+    await updateAdminOrderStatus({ data: { id, status: next as never } });
+    router.refresh();
+    setLoadingId(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Orders"
+        description="Track and update order status"
+        action={
+          <Button onClick={() => setCreateOpen(true)}>Create order</Button>
+        }
+      />
+
+      <Card className="border-celis-border bg-celis-surface-base">
+        <CardContent className="p-4">
+          <Combobox
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value);
+              const params = new URLSearchParams();
+              if (value) params.set("status", value);
+              router.push(`/admin/orders${params.size ? `?${params}` : ""}`);
+            }}
+            className="w-full sm:w-44"
+            placeholder="All statuses"
+            options={statusOptions}
+          />
+        </CardContent>
+      </Card>
+
+      <AdminTable
+        rows={items}
+        keyExtractor={(o) => o.id}
+        columns={[
+          {
+            key: "order",
+            header: "Order",
+            cell: (o) => (
+              <div>
+                <p className="font-medium text-celis-ink">{o.listingTitle}</p>
+                <p className="text-xs text-celis-ink-secondary">
+                  {o.buyerName} → {o.sellerName}
+                </p>
+              </div>
+            ),
+          },
+          {
+            key: "amount",
+            header: "Amount",
+            cell: (o) => (
+              <span className="font-mono tabular-nums">
+                {formatPrice(o.salePrice)}
+              </span>
+            ),
+          },
+          {
+            key: "fees",
+            header: "Fees / Payout",
+            cell: (o) => (
+              <div className="text-xs">
+                <p className="text-celis-ink-secondary">
+                  Fee {formatPrice(o.platformFee)}
+                </p>
+                <p className="text-celis-success">
+                  Payout {formatPrice(o.netPayout)}
+                </p>
+              </div>
+            ),
+          },
+          {
+            key: "status",
+            header: "Status",
+            cell: (o) => <OrderStatusBadge status={o.status} />,
+          },
+          {
+            key: "created",
+            header: "Created",
+            cell: (o) => (
+              <span className="text-xs text-celis-ink-secondary">
+                {formatRelativeDate(o.createdAt)}
+              </span>
+            ),
+          },
+          {
+            key: "actions",
+            header: "Update",
+            cell: (o) => (
+              <Combobox
+                value={o.status}
+                disabled={loadingId === o.id}
+                onValueChange={(v) => handleStatusChange(o.id, v)}
+                className="w-full sm:w-40"
+                options={rowStatusOptions}
+              />
+            ),
+          },
+        ]}
+      />
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) =>
+          router.push(`/admin/orders${initialStatus ? `?status=${encodeURIComponent(initialStatus)}&` : "?"}page=${p}`)
+        }
+      />
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create order</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="listingId">Listing ID</Label>
+              <Input
+                id="listingId"
+                value={createForm.listingId}
+                onChange={(e) =>
+                  setCreateForm((f) => ({ ...f, listingId: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="buyerEmail">Buyer email</Label>
+              <Input
+                id="buyerEmail"
+                type="email"
+                value={createForm.buyerEmail}
+                onChange={(e) =>
+                  setCreateForm((f) => ({ ...f, buyerEmail: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="salePrice">Sale price (cents)</Label>
+              <Input
+                id="salePrice"
+                type="number"
+                min={0}
+                value={createForm.salePrice}
+                onChange={(e) =>
+                  setCreateForm((f) => ({ ...f, salePrice: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createLoading}>
+                {createLoading ? "Creating..." : "Create order"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

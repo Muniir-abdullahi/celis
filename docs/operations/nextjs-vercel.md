@@ -26,10 +26,10 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-The home, browse, search, listing detail, shop, sell, account, dashboard, and
-admin dashboard
-notifications, full password recovery flow, sign-in, sign-up, privacy, and terms
-screens are now native App Router pages.
+The home, browse, search, listing detail, shop, sell, account, dashboard,
+notifications, admin dashboard, orders, payouts, audit log, full password
+recovery flow, sign-in, sign-up, privacy, and terms screens are now native App
+Router pages.
 Protected account, dashboard, notification, and admin routes verify the
 Supabase session and permissions on the server. Home and browse load live marketplace data through existing server
 actions; search reads filters from the URL and renders its result set on the
