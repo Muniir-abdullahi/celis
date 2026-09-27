@@ -26,7 +26,8 @@ with `NEXT_PUBLIC_`.
 
 ## Migration Status
 
-The home, browse, search, sign-in, sign-up, privacy, and terms screens are now native App Router
+The home, browse, search, full password recovery flow, sign-in, sign-up,
+privacy, and terms screens are now native App Router
 pages. Home and browse load live marketplace data through existing server
 actions; search reads filters from the URL and renders its result set on the
 server. Shared auth, theme, and query providers mount from the Next root layout,
