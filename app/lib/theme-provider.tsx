@@ -28,9 +28,9 @@ export function ThemeProvider({
   defaultTheme?: Theme;
 }) {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(
-    getSystemTheme()
-  );
+  // Keep the server render and the first client render identical. The actual
+  // stored/system preference is applied by effects after hydration.
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
@@ -65,7 +65,6 @@ export function ThemeProvider({
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
-  // Prevent flash by rendering children only after mounted; the html class is set in effect.
   return (
     <ThemeContext.Provider
       value={{ theme, resolvedTheme, setTheme, toggleTheme }}

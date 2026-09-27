@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Fixed potential hydration mismatches by initializing theme state identically
+  for SSR and the first client render, and making displayed date and number
+  formatting independent of the runtime locale and timezone.
 - Began the Next.js migration: the app now builds and runs through Next.js
   16.3.6 on React 19.3.0, with a Next App Router layout, Vercel-compatible
   routing, and the mobile listing-fee Route Handler.

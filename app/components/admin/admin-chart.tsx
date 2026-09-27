@@ -36,7 +36,11 @@ function useChartColors() {
 
 function formatDateLabel(value: string) {
   const d = new Date(value);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 interface TrendPoint {

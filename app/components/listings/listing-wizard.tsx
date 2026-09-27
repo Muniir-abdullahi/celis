@@ -34,7 +34,7 @@ import {
   MONETIZATION_TYPES,
   WALLET_PROVIDERS,
 } from "~/db/schema";
-import { formatPrice } from "~/lib/format";
+import { formatDate, formatPrice } from "~/lib/format";
 import {
   calculateListingPricing,
   type ListingTiersConfig,
@@ -540,8 +540,8 @@ export function ListingWizard({
                     const min = tier.minCents / 100;
                     const max = tier.maxCents === null ? null : tier.maxCents / 100;
                     const range = max === null
-                      ? `$${min.toLocaleString()}+`
-                      : `$${min.toLocaleString()} – $${max.toLocaleString()}`;
+                      ? `$${min.toLocaleString("en-US")}+`
+                      : `$${min.toLocaleString("en-US")} – $${max.toLocaleString("en-US")}`;
                     return (
                       <li
                         key={tier.label}
@@ -589,7 +589,7 @@ export function ListingWizard({
                     </strong>
                   </p>
                 )}
-                <p>Expires on {preview.expiresAt.toLocaleDateString()}.</p>
+                <p>Expires on {formatDate(preview.expiresAt)}.</p>
               </div>
             </div>
           )}
@@ -661,7 +661,7 @@ export function ListingWizard({
                 <div className="flex justify-between py-2">
                   <dt className="text-celis-ink-secondary">Expires</dt>
                   <dd className="font-medium">
-                    {preview.expiresAt.toLocaleDateString()}
+                    {formatDate(preview.expiresAt)}
                   </dd>
                 </div>
               </dl>

@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Pagination } from "~/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ListingStatusBadge } from "~/components/admin/status-badge";
+import { formatDate } from "~/lib/format";
 import {
   removeListing,
   deactivateSellerListing,
@@ -198,7 +199,7 @@ export function DashboardContent({ user, data }: DashboardContentProps) {
                 {subscription && (
                   <p className="mt-1 text-xs text-celis-ink-secondary">
                     {subscription.packageName} · Expires{" "}
-                    {new Date(subscription.expiresAt).toLocaleDateString()}
+                    {formatDate(subscription.expiresAt)}
                   </p>
                 )}
               </CardContent>

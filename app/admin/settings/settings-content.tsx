@@ -29,7 +29,7 @@ import {
   updateAdminPlatformConfig,
   runAdminExpirySweep,
 } from "~/server/admin.functions";
-import { formatRelativeDate } from "~/lib/format";
+import { formatDate, formatRelativeDate } from "~/lib/format";
 import {
   DEFAULT_LISTING_TIERS,
   type ListingTiersConfig,
@@ -45,7 +45,7 @@ function toDateTimeLocal(value: Date | string | null | undefined): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
 }
 
 interface ConfigItem {
@@ -705,11 +705,11 @@ export function SettingsContent({ initialConfigs }: { initialConfigs: ConfigItem
                     {config.effectiveFrom || config.effectiveUntil
                       ? ` · effective ${
                           config.effectiveFrom
-                            ? new Date(config.effectiveFrom).toLocaleDateString()
+                            ? formatDate(config.effectiveFrom)
                             : "now"
                         } – ${
                           config.effectiveUntil
-                            ? new Date(config.effectiveUntil).toLocaleDateString()
+                            ? formatDate(config.effectiveUntil)
                             : "ongoing"
                         }`
                       : ""}

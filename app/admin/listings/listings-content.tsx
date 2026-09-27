@@ -33,7 +33,7 @@ import {
   runAdminExpirySweep,
   markAdminListingPaid,
 } from "~/server/admin.functions";
-import { formatPrice, formatRelativeDate } from "~/lib/format";
+import { formatDate, formatPrice, formatRelativeDate } from "~/lib/format";
 
 type ListingsData = {
   listings: Awaited<ReturnType<typeof fetchAdminListings>>;
@@ -344,7 +344,7 @@ export function ListingsContent({ data, search }: { data: ListingsData; search: 
               return (
                 <div>
                   <span className="text-xs text-celis-ink-secondary">
-                    {new Date(l.expiresAt).toLocaleDateString()}
+                    {formatDate(l.expiresAt)}
                   </span>
                   <p
                     className={`text-xs font-medium ${

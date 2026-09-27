@@ -69,7 +69,7 @@ export function SiteFooter() {
         </div>
         <Separator className="my-8" />
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-celis-ink-secondary sm:flex-row">
-          <p>© {new Date().getFullYear()} Celis. All rights reserved.</p>
+          <p>© Celis. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-celis-ink">Privacy</Link>
             <Link href="/terms" className="hover:text-celis-ink">Terms</Link>
