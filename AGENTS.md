@@ -141,7 +141,7 @@ Read `celis-design-system.md` before UI work. Preserve the established brand, la
 | File | Role |
 | :--- | :--- |
 | `app/layout.tsx` | Next.js document shell |
-| `app/[[...segments]]/page.tsx` | Transitional route-tree mount; migrate screens into App Router routes |
+| `app/[...segments]/page.tsx` | Transitional route-tree mount; migrate screens into App Router routes |
 | `app/router.tsx` | Router setup |
 | `app/routes/__root.tsx` | Root route |
 | `app/routes/index.tsx` | Landing/home route |

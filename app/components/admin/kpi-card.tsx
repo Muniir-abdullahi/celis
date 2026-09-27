@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 
 interface KpiCardProps {
   title: string;
@@ -50,7 +50,7 @@ export function KpiCard({
 
   if (href) {
     return (
-      <Link to={href} className="block">
+      <Link href={href} className="block">
         <Card className="border-celis-border bg-celis-surface-base transition-colors hover:border-celis-primary hover:bg-celis-surface-elevated">
           {content}
         </Card>
