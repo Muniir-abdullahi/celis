@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.1] - 2026-09-27
+
+### Fixed
+
+- Removed the manual root-layout `<head>` that conflicted with Next.js metadata
+  rendering during Vercel prerendering. Moved viewport and theme color to the
+  Next.js viewport export and retained Inter loading in the global stylesheet.
+
 ## [v1.6.0] - 2026-09-27
 
 ### Changed

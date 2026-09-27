@@ -7,6 +7,9 @@ tables, and the design-system pointer.
 
 - Vercel and local `dev`/`build`/`start` commands use Next.js 16 App Router.
 - `app/layout.tsx` owns the document shell and global stylesheet.
+- Define document metadata and viewport settings through Next.js exports in
+  `app/layout.tsx`. Keep font loading in the global stylesheet; do not render a
+  manual `<head>` in the root layout.
 - All marketplace screens and the mobile payment endpoint use native App Router
   pages and Route Handlers. There is no catch-all compatibility router.
 - Next public Supabase settings use `NEXT_PUBLIC_SUPABASE_URL` and
