@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.3] - 2026-09-27
+
+### Fixed
+
+- Added a standalone global 404 page and request rendering for the root layout
+  to avoid Next.js 16.3.6 crashing while prerendering client providers on
+  Vercel.
+
 ## [v1.6.2] - 2026-09-27
 
 ### Fixed

@@ -10,6 +10,9 @@ tables, and the design-system pointer.
   `/_global-error` route is not scheduled for static prerendering. This works
   around the framework's null `useContext` crash on Vercel. Remove the patch
   after upgrading to a Next.js release that fixes that route.
+- The root layout is request-rendered to avoid a separate Next.js prerender
+  failure in its client providers. Unmatched URLs use a standalone
+  `app/global-not-found.tsx` page that bypasses those providers.
 - `app/layout.tsx` owns the document shell and global stylesheet.
 - Define document metadata and viewport settings through Next.js exports in
   `app/layout.tsx`. Keep font loading in the global stylesheet; do not render a

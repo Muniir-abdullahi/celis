@@ -27,6 +27,10 @@ export const viewport: Viewport = {
   themeColor: "#0085FF",
 };
 
+// Next.js 16.3.6 can fail while statically rendering the root client providers
+// on Vercel. Keep these routes request-rendered until the framework is fixed.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
