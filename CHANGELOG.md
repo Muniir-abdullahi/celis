@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.2] - 2026-09-27
+
+### Fixed
+
+- Prevented Next.js 16.3.6 from prerendering its synthetic `/_global-error`
+  route during Vercel builds. The version-guarded build patch fails loudly if
+  Next.js changes its internal route classification.
+
 ## [v1.6.1] - 2026-09-27
 
 ### Fixed

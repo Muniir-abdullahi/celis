@@ -6,6 +6,10 @@ tables, and the design-system pointer.
 ## Next.js Migration Status
 
 - Vercel and local `dev`/`build`/`start` commands use Next.js 16 App Router.
+- The build script applies a guarded patch to Next.js 16.3.6 so its synthetic
+  `/_global-error` route is not scheduled for static prerendering. This works
+  around the framework's null `useContext` crash on Vercel. Remove the patch
+  after upgrading to a Next.js release that fixes that route.
 - `app/layout.tsx` owns the document shell and global stylesheet.
 - Define document metadata and viewport settings through Next.js exports in
   `app/layout.tsx`. Keep font loading in the global stylesheet; do not render a

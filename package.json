@@ -6,7 +6,7 @@
   "description": "Celis — Somalia P2P marketplace",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
-    "build": "next build",
+    "build": "node scripts/patch-next-global-error.mjs && next build",
     "preview": "next start",
     "start": "next start",
     "lint": "eslint .",
