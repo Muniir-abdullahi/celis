@@ -11,12 +11,13 @@
   Server Actions and moved Supabase SSR cookie handling to Next's request
   context. The existing TanStack client route tree remains as a compatibility
   layer until individual screens are ported.
-- Added native App Router home, browse, search, privacy, and terms pages. Home
-  and browse load live data through existing server actions; search reads its
-  filters from the URL and renders results on the server. Legal pages use the
-  canonical HTML documents. Shared auth, theme, query providers, and navigation
-  now use the Next root layout and App Router. Replaced the optional route
-  fallback with a required catch-all so Next can serve `/` directly.
+- Added native App Router home, browse, search, sign-in, sign-up, privacy, and
+  terms pages. Home and browse load live data through existing server actions;
+  search reads its filters from the URL and renders results on the server. Legal
+  pages use the canonical HTML documents. Shared auth, theme, query providers,
+  and navigation now use the Next root layout and App Router. Replaced the
+  optional route fallback with a required catch-all so Next can serve `/`
+  directly.
 
 ## [v1.5.0] - 2026-09-02
 
