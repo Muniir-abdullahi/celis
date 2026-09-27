@@ -12,7 +12,7 @@
   context. The existing TanStack client route tree remains as a compatibility
   layer until individual screens are ported.
 - Added native App Router home, browse, search, listing detail, shop, sell,
-  account, dashboard, admin dashboard, orders, payouts, audit log, seller
+  account, dashboard, admin dashboard, users, orders, payouts, audit log, seller
   verifications, notifications,
   full
   password recovery, sign-in, sign-up, privacy, and terms pages. Protected
