@@ -27,7 +27,8 @@ with `NEXT_PUBLIC_`.
 ## Migration Status
 
 The home, browse, search, listing detail, shop, sell, account, dashboard,
-notifications, admin dashboard, listings and listing detail, users, roles, orders, payouts, audit log, seller
+notifications, admin dashboard, listings and listing detail, categories, packages,
+reports, settings, users, roles, orders, payouts, audit log, seller
 verifications, full password
 recovery flow, sign-in, sign-up, privacy, and terms screens are now native App
 Router pages.
