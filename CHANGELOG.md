@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.5] - 2026-09-28
+
+### Security
+
+- Audited codebase against the Next.js 16.3.6 `ImageResponse` / `next/og` RCE advisory. Confirmed the project runs on the patched Next.js 16.3.6 and does not use `next/og` dynamic SVG image generation.
+- Aligned `drizzle-kit` dependency declaration in `package.json` and lockfiles to `^0.31.11`.
+
 ## [v1.6.4] - 2026-09-27
 
 ### Fixed
