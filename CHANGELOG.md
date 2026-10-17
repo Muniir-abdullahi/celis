@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.10] - 2026-10-17
+
+### Fixed
+
+- Return signup setup failures to the form instead of surfacing a generic
+  React server-action error. Allow an authenticated retry to repair missing
+  local user/profile records after a partial Supabase account creation.
+
 ## [v1.6.9] - 2026-10-17
 
 ### Fixed

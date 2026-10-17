@@ -26,3 +26,16 @@ test("sign-in form stops before refreshing or redirecting on an expected failure
   assert.match(form, /if \(!result.success\)\s*\{\s*setError\(result.error\);\s*return;\s*\}\s*await refresh\(\)/);
   assert.match(form, /role="alert"/);
 });
+
+test("sign-up returns inline errors and can repair interrupted local provisioning", () => {
+  const form = readFileSync("app/auth/sign-up/sign-up-form.tsx", "utf8");
+  const action = readFileSync("app/server/auth.functions.ts", "utf8");
+  const authServer = readFileSync("app/server/auth.server.ts", "utf8");
+
+  assert.match(form, /if \(!result\.success\)\s*\{\s*setError\(result\.error\);\s*return;\s*\}/);
+  assert.match(form, /role="alert"/);
+  assert.match(action, /verify_existing_auth_user/);
+  assert.match(action, /provision_local_user/);
+  assert.match(action, /success: false as const/);
+  assert.match(authServer, /if \(profile\.length === 0\)\s*\{\s*await db\.insert\(profiles\)/);
+});

@@ -44,61 +44,113 @@ const signUpSchema = z.object({
 });
 
 export async function signUp(input: { data: unknown }) {
-  const data = (signUpSchema).parse(input.data);
+  const parsed = signUpSchema.safeParse(input.data);
+  if (!parsed.success) {
+    return { success: false as const, error: "Check the details and try again." };
+  }
 
-    // Use the service-role client to create the user with a confirmed email.
-    // This avoids Supabase's sign-up email rate limit and skips the
-    // confirmation step in this environment.
+  const data = parsed.data;
+  let phase = "create_auth_user";
+  try {
     const serviceSupabase = getServiceSupabase();
-    const { data: authData, error } = await serviceSupabase.auth.admin.createUser(
-      {
+    const { data: created, error: createError } =
+      await serviceSupabase.auth.admin.createUser({
         email: data.email,
         password: data.password,
         email_confirm: true,
+      });
+
+    let authUser = created.user;
+    let alreadySignedIn = false;
+    if (createError) {
+      const isExistingEmail =
+        createError.code === "email_exists" ||
+        /already registered|already exists/i.test(createError.message);
+      if (!isExistingEmail) throw createError;
+
+      // A previous attempt may have created the Auth account but failed while
+      // provisioning the local user/profile. Verify ownership before repair.
+      phase = "verify_existing_auth_user";
+      const supabase = await getSupabaseServerClient();
+      const { data: signedIn, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+      if (signInError || !signedIn.user) {
+        return {
+          success: false as const,
+          error: "An account already exists for this email. Sign in or reset your password.",
+        };
       }
-    );
-
-    if (error) {
-      throw new Error(error.message);
+      authUser = signedIn.user;
+      alreadySignedIn = true;
     }
 
-    if (!authData.user?.email) {
-      throw new Error("Sign up succeeded but user was not returned.");
-    }
+    if (!authUser?.email) throw new Error("Auth user was not returned");
 
-    await ensureLocalUserRecord(
-      authData.user.id,
-      authData.user.email,
-      data.role
-    );
-
+    phase = "provision_local_user";
     const { db } = await import("~/db");
-    const { profiles } = await import("~/db/schema");
+    const { profiles, users } = await import("~/db/schema");
     const { eq } = await import("drizzle-orm");
-    await db
-      .update(profiles)
-      .set({
-        displayName: data.displayName,
-        sellerType: data.sellerType,
-        businessName: data.businessName || null,
-        businessRegistrationNumber:
-          data.businessRegistrationNumber || null,
-        businessAddress: data.businessAddress || null,
-        shopSlug: data.shopSlug || null,
-      })
-      .where(eq(profiles.id, authData.user.id));
+    const localUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, authUser.id))
+      .limit(1);
+    const [localProfile] = await db
+      .select({ displayName: profiles.displayName })
+      .from(profiles)
+      .where(eq(profiles.id, authUser.id))
+      .limit(1);
+    await ensureLocalUserRecord(authUser.id, authUser.email, data.role);
 
-    // Sign in with the anon client so the session cookies are set for the user.
-    const supabase = await getSupabaseServerClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-    if (signInError) {
-      throw new Error(signInError.message);
+    // An authenticated retry may be repairing an interrupted first signup.
+    // Preserve profile data when this is already a fully provisioned account.
+    const profileNeedsSetup =
+      !localProfile || localProfile.displayName === authUser.email.split("@")[0];
+    if (!alreadySignedIn || localUser.length === 0 || profileNeedsSetup) {
+      phase = "update_profile";
+      await db
+        .update(profiles)
+        .set({
+          displayName: data.displayName,
+          sellerType: data.sellerType,
+          businessName: data.businessName || null,
+          businessRegistrationNumber:
+            data.businessRegistrationNumber || null,
+          businessAddress: data.businessAddress || null,
+          shopSlug: data.shopSlug || null,
+        })
+        .where(eq(profiles.id, authUser.id));
     }
 
-    return { success: true, userId: authData.user.id };
+    if (!alreadySignedIn) {
+      phase = "sign_in_new_user";
+      const supabase = await getSupabaseServerClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (signInError) throw signInError;
+    }
+
+    return { success: true as const, userId: authUser.id };
+  } catch (error) {
+    const providerError = error as { code?: unknown; name?: unknown };
+    console.error("[signup] account setup failed", {
+      phase,
+      errorName: typeof providerError.name === "string" ? providerError.name : "Error",
+      errorCode: typeof providerError.code === "string" ? providerError.code : undefined,
+    });
+    return {
+      success: false as const,
+      error:
+        phase === "sign_in_new_user"
+          ? "Your account was created, but sign-in could not be completed. Please sign in."
+          : "We could not finish creating your account. Please try again or contact Celis support if the problem continues.",
+    };
+  }
 }
 
 export async function signIn(input: { data: unknown }) {

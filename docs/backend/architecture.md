@@ -74,6 +74,12 @@ retry message; invalid credentials, rate limits, and unconfirmed email addresses
 have separate messages. Provider internals are not returned. Unexpected local
 database failures still propagate as server errors.
 
+Sign-up also returns a success/error result so the form can show recoverable
+setup failures without exposing a framework error digest. If Supabase Auth
+created an account before local `users`/`profiles` provisioning failed, a retry
+must authenticate with that account's password before repairing the local
+records. Existing profile data is preserved during that recovery path.
+
 The cookie-based Supabase server client uses `app/lib/supabase/fetch.ts` with
 `cache: no-store`. It retries one transport failure for auth GET requests and
 password token exchanges, retaining the request body and headers. It does not

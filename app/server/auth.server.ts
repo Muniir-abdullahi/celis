@@ -372,7 +372,23 @@ export async function ensureLocalUserRecord(
           : null,
     });
   } else {
-    await ensureProfileSellerNumber(id);
+    const profile = await db
+      .select({ id: profiles.id })
+      .from(profiles)
+      .where(eq(profiles.id, id))
+      .limit(1);
+    if (profile.length === 0) {
+      await db.insert(profiles).values({
+        id,
+        displayName: email.split("@")[0],
+        sellerNumber:
+          role === "seller" && !isInternal
+            ? await generateUniqueSellerNumber()
+            : null,
+      });
+    } else {
+      await ensureProfileSellerNumber(id);
+    }
   }
 
   const profileRow = await db

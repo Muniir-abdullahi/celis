@@ -52,7 +52,7 @@ export function SignUpForm({ defaultRole }: { defaultRole?: "buyer" | "seller" }
     setLoading(true);
     setError(null);
     try {
-      await signUp({
+      const result = await signUp({
         data: {
           email,
           password,
@@ -69,6 +69,10 @@ export function SignUpForm({ defaultRole }: { defaultRole?: "buyer" | "seller" }
           }),
         },
       });
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
       await refresh();
       router.push("/dashboard");
     } catch (err) {
@@ -186,7 +190,7 @@ export function SignUpForm({ defaultRole }: { defaultRole?: "buyer" | "seller" }
             )}
 
             {error && (
-              <p className="text-sm text-celis-destructive">{error}</p>
+              <p role="alert" className="text-sm text-celis-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Create account"}
