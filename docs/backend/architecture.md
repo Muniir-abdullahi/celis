@@ -80,6 +80,18 @@ created an account before local `users`/`profiles` provisioning failed, a retry
 must authenticate with that account's password before repairing the local
 records. Existing profile data is preserved during that recovery path.
 
+### Password recovery
+
+Password recovery uses Supabase Auth `resetPasswordForEmail` with the
+application's configured SMTP provider (Brevo). Configure the production
+Supabase Auth SMTP settings and allowlist `${APP_URL}/auth/reset-password` as a
+redirect URL. The request action always returns the same success response so
+unknown addresses cannot be enumerated. The recovery link establishes a
+short-lived Supabase recovery session; the reset form changes the password
+through `auth.updateUser`, so no app-generated reset token or email address is
+returned in a URL or stored in the legacy `password_resets` table. Provider
+errors are logged server-side and the UI remains generic.
+
 The cookie-based Supabase server client uses `app/lib/supabase/fetch.ts` with
 `cache: no-store`. It retries one transport failure for auth GET requests and
 password token exchanges, retaining the request body and headers. It does not

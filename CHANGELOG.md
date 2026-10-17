@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.11] - 2026-10-17
+
+### Fixed
+
+- Replaced the insecure password reset token flow with Supabase Auth recovery
+  emails, generic responses, and password updates bound to the recovery session.
+
 ## [v1.6.10] - 2026-10-17
 
 ### Fixed

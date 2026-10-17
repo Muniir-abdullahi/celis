@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { resetPasswordByToken } from "~/server/password-reset.functions";
+import { createClient } from "~/lib/supabase/client";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -15,7 +15,7 @@ import {
   CardDescription,
 } from "~/components/ui/card";
 import { CelisLogo } from "~/components/branding/celis-logo";
-export function ResetPasswordForm({ token, email }: { token?: string; email?: string }) {
+export function ResetPasswordForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,13 +27,8 @@ export function ResetPasswordForm({ token, email }: { token?: string; email?: st
     e.preventDefault();
     setError(null);
 
-    if (!token) {
-      setError("Reset link is invalid or has expired.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 12) {
+      setError("Use at least 12 characters for your password.");
       return;
     }
 
@@ -45,7 +40,8 @@ export function ResetPasswordForm({ token, email }: { token?: string; email?: st
     setLoading(true);
 
     try {
-      await resetPasswordByToken({ data: { token, password } });
+      const { error } = await createClient().auth.updateUser({ password });
+      if (error) throw new Error("Your reset link is invalid or expired. Request a new one.");
       setSuccess(true);
       setTimeout(() => {
         router.push("/auth/sign-in");
@@ -67,7 +63,7 @@ export function ResetPasswordForm({ token, email }: { token?: string; email?: st
         <CardHeader className="text-center">
           <CardTitle>Create new password</CardTitle>
           <CardDescription>
-            {email ? `For ${email}` : "Enter your new password below."}
+            Enter a new password below.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,6 +86,8 @@ export function ResetPasswordForm({ token, email }: { token?: string; email?: st
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  minLength={12}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   required
                 />
@@ -101,6 +99,8 @@ export function ResetPasswordForm({ token, email }: { token?: string; email?: st
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={12}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   required
                 />
