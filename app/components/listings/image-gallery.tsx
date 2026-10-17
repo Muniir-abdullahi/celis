@@ -7,7 +7,7 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import { getOptimizedImageUrl } from "~/lib/images";
+import { ListingImage } from "./listing-image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface ImageGalleryProps {
@@ -48,8 +48,9 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
         className="block aspect-square w-full cursor-pointer overflow-hidden rounded-md border border-celis-border bg-celis-surface-inset focus:outline-none focus:ring-2 focus:ring-celis-primary focus:ring-offset-2"
       >
         {!mainLoaded && <Skeleton className="h-full w-full rounded-none" />}
-        <img
-          src={getOptimizedImageUrl(mainImage, { width: 960, height: 960, quality: 80 })}
+        <ListingImage
+          src={mainImage}
+          imageOptions={{ width: 960, height: 960, quality: 80 }}
           alt={title}
           className={cn("h-full w-full object-cover", !mainLoaded && "hidden")}
           decoding="async"
@@ -72,8 +73,9 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                   "border-celis-border"
                 )}
               >
-                <img
-                  src={getOptimizedImageUrl(src, { width: 180, height: 180 })}
+                <ListingImage
+                  src={src}
+                  imageOptions={{ width: 180, height: 180 }}
                   alt={`${title} thumbnail ${actualIndex + 1}`}
                   className="h-full w-full object-cover"
                   loading="lazy"
@@ -113,12 +115,13 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
             )}
 
             <div className="max-h-[80vh] overflow-hidden rounded-lg bg-celis-surface-base shadow-xl">
-              <img
-                src={getOptimizedImageUrl(images[modalIndex] ?? "/placeholder.svg", {
+              <ListingImage
+                src={images[modalIndex] ?? "/placeholder.svg"}
+                imageOptions={{
                   width: 1400,
                   height: 1400,
                   quality: 85,
-                })}
+                }}
                 alt={title}
                 className="max-h-[80vh] w-auto max-w-full object-contain"
                 decoding="async"
@@ -154,8 +157,9 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                       : "border-celis-border"
                   )}
                 >
-                  <img
-                    src={getOptimizedImageUrl(src, { width: 160, height: 160 })}
+                  <ListingImage
+                    src={src}
+                    imageOptions={{ width: 160, height: 160 }}
                     alt={`${title} thumbnail ${idx + 1}`}
                     className="h-full w-full object-cover"
                     loading="lazy"

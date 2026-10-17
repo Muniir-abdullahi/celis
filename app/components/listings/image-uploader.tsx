@@ -1,14 +1,14 @@
 import { useState, useRef, useCallback } from "react";
 import { getListingImageUploadUrl } from "~/server/storage.functions";
-import type { ListingImage } from "~/lib/validation";
+import type { ListingImage as ListingImageData } from "~/lib/validation";
 import { X, Upload, Loader2 } from "lucide-react";
 import { cn } from "~/lib/utils";
-import { getOptimizedImageUrl } from "~/lib/images";
+import { ListingImage } from "./listing-image";
 
 interface ImageUploaderProps {
   sellerId: string;
-  images: ListingImage[];
-  onChange: (images: ListingImage[]) => void;
+  images: ListingImageData[];
+  onChange: (images: ListingImageData[]) => void;
   maxImages?: number;
 }
 
@@ -35,7 +35,7 @@ export function ImageUploader({
       setError(null);
 
       try {
-        const next: ListingImage[] = [];
+        const next: ListingImageData[] = [];
         for (const file of files) {
           const meta = await getListingImageUploadUrl({
             data: {
@@ -94,8 +94,9 @@ export function ImageUploader({
             key={`${img.path}-${idx}`}
             className="relative aspect-square overflow-hidden rounded-lg border border-celis-border bg-celis-surface-inset"
           >
-            <img
-              src={getOptimizedImageUrl(img.url, { width: 320, height: 320 })}
+            <ListingImage
+              src={img.url}
+              imageOptions={{ width: 320, height: 320 }}
               alt={`Listing image ${idx + 1}`}
               className="h-full w-full object-cover"
               loading="lazy"

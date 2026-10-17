@@ -6,7 +6,7 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import { formatPrice, formatRelativeDate } from "~/lib/format";
-import { getOptimizedImageUrl } from "~/lib/images";
+import { ListingImage } from "./listing-image";
 import { Sparkles } from "lucide-react";
 import type { ListingPublic } from "~/server/listings.server";
 
@@ -23,8 +23,9 @@ export function ListingCard({ listing }: ListingCardProps) {
       <Card className="overflow-hidden transition-shadow hover:shadow-md">
         <div className="aspect-[4/3] overflow-hidden bg-celis-surface-inset">
           {!loaded && <Skeleton className="h-full w-full rounded-none" />}
-          <img
-            src={getOptimizedImageUrl(cover, { width: 640, height: 480 })}
+          <ListingImage
+            src={cover}
+            imageOptions={{ width: 640, height: 480 }}
             alt={listing.title}
             className={`h-full w-full object-cover transition duration-300 group-hover:scale-105 ${
               loaded ? "opacity-100" : "hidden opacity-0"

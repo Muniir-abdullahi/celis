@@ -44,6 +44,10 @@ Rules:
 
 - Search and browse must use scoped, paginated result sets.
 - Listing creation should use Zod validation.
+- Uploaded listing images use optimized Supabase URLs with a fallback to their
+  original public URL if image rendering fails.
+- Shop listing publication requires an active package with remaining listing
+  credits; the wizard shows the reason and a support contact when blocked.
 - Listing status changes require confirmation and audit consideration.
 - Listing expiry behavior belongs in the documented cron path.
 - Do not pack listing detail, payment, seller, image, and interaction logic into one large route file.

@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.14] - 2026-10-17
+
+### Fixed
+
+- Fall back to original listing image URLs when Supabase image transforms fail.
+- Explain shop listing-credit requirements beside the disabled publish action
+  and link sellers to package support.
+
 ## [v1.6.13] - 2026-10-17
 
 ### Changed

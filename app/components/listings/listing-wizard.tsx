@@ -387,9 +387,21 @@ export function ListingWizard({
 
         <CardContent className="space-y-6">
           {eligibility?.canList === false && (
-            <div className="rounded-lg border border-celis-caution bg-celis-caution-subtle p-4 text-sm text-celis-ink">
+            <div
+              role="status"
+              className="space-y-2 rounded-lg border border-celis-caution bg-celis-caution-subtle p-4 text-sm text-celis-ink"
+            >
               {eligibility.sellerType === "shop"
-                ? "Your shop does not have an active listing package. Contact admin to activate a package before publishing."
+                ? <>
+                    <p className="font-semibold">Publishing is disabled because this shop has 0 listing credits remaining.</p>
+                    <p>Activate or renew a listing package to publish more items.</p>
+                    <a
+                      href="mailto:hello@celis.so?subject=Listing%20package%20activation"
+                      className="inline-block font-medium text-celis-primary underline underline-offset-2"
+                    >
+                      Contact Celis support to request activation
+                    </a>
+                  </>
                 : "You cannot publish right now. Please check your account status."}
             </div>
           )}
