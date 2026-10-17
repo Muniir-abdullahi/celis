@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "~/lib/supabase/client";
+import { updateRecoveryPassword } from "~/server/password-reset.functions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -15,7 +15,7 @@ import {
   CardDescription,
 } from "~/components/ui/card";
 import { CelisLogo } from "~/components/branding/celis-logo";
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ linkError = false }: { linkError?: boolean }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +25,8 @@ export function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError(linkError ? "Your reset link is invalid or expired. Request a new one." : null);
+    if (linkError) return;
 
     if (password.length < 12) {
       setError("Use at least 12 characters for your password.");
@@ -40,8 +41,7 @@ export function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const { error } = await createClient().auth.updateUser({ password });
-      if (error) throw new Error("Your reset link is invalid or expired. Request a new one.");
+      await updateRecoveryPassword({ data: { password } });
       setSuccess(true);
       setTimeout(() => {
         router.push("/auth/sign-in");

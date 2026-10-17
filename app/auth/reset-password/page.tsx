@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   description: "Create a new password for your Celis account.",
 };
 
-export default function ResetPasswordPage() {
-  return <ResetPasswordForm />;
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const error = Array.isArray(params.error) ? params.error[0] : params.error;
+  return <ResetPasswordForm linkError={error === "recovery"} />;
 }

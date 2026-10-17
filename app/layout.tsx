@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import Script from "next/script";
 import { Providers } from "./providers";
 import "~/styles/globals.css";
-
+import { Analytics } from "@vercel/analytics/next";
 const description =
   "Celis is Somalia's marketplace for electronics, vehicles, property, fashion, livestock, and more. Buy and sell locally with mobile money.";
 
@@ -42,6 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           data-site-id="P-EMWPFCU2C8"
           strategy="afterInteractive"
         />
+        <Analytics />
       </body>
     </html>
   );

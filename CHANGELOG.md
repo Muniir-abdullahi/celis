@@ -8,6 +8,8 @@
   emails, generic responses, and password updates bound to the recovery session.
 - Pointed production recovery emails at the canonical reset page so Supabase
   cannot fall back to the marketplace landing page when APP_URL differs by host.
+- Exchange recovery codes in a server callback and update passwords through a
+  server action, avoiding reliance on missing public Supabase browser variables.
 
 ## [v1.6.10] - 2026-10-17
 

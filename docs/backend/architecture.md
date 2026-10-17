@@ -84,12 +84,14 @@ records. Existing profile data is preserved during that recovery path.
 
 Password recovery uses Supabase Auth `resetPasswordForEmail` with the
 application's configured SMTP provider (Brevo). Configure the production
-Supabase Auth SMTP settings and allowlist `https://www.celis.so/auth/reset-password`
-as a redirect URL (the production recovery link uses the canonical `www` host).
+Supabase Auth SMTP settings and allowlist
+`https://www.celis.so/auth/callback` as a redirect
+URL (the production recovery link uses the canonical `www` host).
 Keep the Supabase Site URL set to `https://www.celis.so` as well. The request action always returns the same success response so
 unknown addresses cannot be enumerated. The recovery link establishes a
-short-lived Supabase recovery session; the reset form changes the password
-through `auth.updateUser`, so no app-generated reset token or email address is
+short-lived Supabase recovery session via the server callback; the reset form
+changes the password through `auth.updateUser`, so no browser Supabase
+configuration or app-generated reset token or email address is
 returned in a URL or stored in the legacy `password_resets` table. Provider
 errors are logged server-side and the UI remains generic.
 
