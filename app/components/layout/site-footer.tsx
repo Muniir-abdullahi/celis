@@ -5,6 +5,7 @@ import { CelisLogo } from "~/components/branding/celis-logo";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
+import { MapPin, Mail, Phone } from "lucide-react";
 
 export function SiteFooter() {
   const { user, logout } = useAuth();
@@ -12,7 +13,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-celis-border bg-celis-surface-base">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-4">
             <CelisLogo variant="mark-only" size={32} badge />
             <p className="text-sm text-celis-ink-secondary">
@@ -56,6 +57,14 @@ export function SiteFooter() {
                   <li><Link href="/auth/sign-up" className="hover:text-celis-ink">Create account</Link></li>
                 </>
               )}
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-4 font-semibold">Contact</h4>
+            <ul className="space-y-3 text-sm text-celis-ink-secondary">
+              <li className="flex items-start gap-2"><Phone className="mt-0.5 h-4 w-4 shrink-0" /><a href="tel:+252610717124" className="hover:text-celis-ink">+252 61 0717124</a></li>
+              <li className="flex items-start gap-2"><Mail className="mt-0.5 h-4 w-4 shrink-0" /><a href="mailto:hello@celis.so" className="hover:text-celis-ink">hello@celis.so</a></li>
+              <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /><span>Xaawo Taako Section, Wadajir District, Mogadishu, Banaadir</span></li>
             </ul>
           </div>
           <div>

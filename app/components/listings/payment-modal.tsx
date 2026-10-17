@@ -152,7 +152,7 @@ export function PaymentModal({
                 disabled={loading || !!merchantRef}
               />
               <p id="payment-phone-help" className="text-sm text-celis-ink-secondary">
-                Enter the wallet number to receive the payment prompt. You can use a different number from your profile.
+                Enter the wallet number that should receive the payment prompt. You can use any valid Somali wallet number.
               </p>
             </div>
 

@@ -30,6 +30,7 @@ Key files:
 - `app/layout.tsx`
 - `app/api/**/route.ts`
 - `app/page.tsx` and route-specific `page.tsx` files
+- `app/components/layout/site-footer.tsx` (shared footer and Celis contact details)
 
 Rules:
 

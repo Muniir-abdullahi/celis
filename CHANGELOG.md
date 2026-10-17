@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.9] - 2026-10-17
+
+### Fixed
+
+- Added Celis phone, email, and Mogadishu address to the shared site footer.
+- Allowed buyers and sellers to use any valid Somali wallet number for web and
+  mobile payments, independent of their registered profile number.
+
 ## [v1.6.8] - 2026-10-16
 
 ### Fixed

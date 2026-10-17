@@ -64,7 +64,6 @@ export async function POST(request: Request) {
     if (listing.sellerId !== authData.user.id) {
       return json({ message: "Forbidden." }, 403);
     }
-
     const pricing = await getListingPricing(listing.price, listing.categoryId);
     console.info("[mobile-listing-payment] starting gateway payment", {
       requestId,
