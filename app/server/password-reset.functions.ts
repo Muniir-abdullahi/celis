@@ -12,8 +12,12 @@ const requestResetSchema = z.object({
 export async function requestPasswordReset(input: { data: unknown }) {
   const { email } = requestResetSchema.parse(input.data);
   const supabase = await getSupabaseServerClient();
+  // Use the canonical production host for recovery links. If Supabase rejects
+  // redirectTo because it is not allowlisted, it silently falls back to Site URL.
+  const appOrigin = env.NODE_ENV === "production" ? "https://www.celis.so" : env.APP_URL;
+  const redirectTo = new URL("/auth/reset-password", appOrigin).toString();
   const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
-    redirectTo: `${env.APP_URL}/auth/reset-password`,
+    redirectTo,
   });
 
   // Keep the response identical for existing and unknown addresses. Provider errors

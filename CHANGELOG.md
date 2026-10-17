@@ -6,6 +6,8 @@
 
 - Replaced the insecure password reset token flow with Supabase Auth recovery
   emails, generic responses, and password updates bound to the recovery session.
+- Pointed production recovery emails at the canonical reset page so Supabase
+  cannot fall back to the marketplace landing page when APP_URL differs by host.
 
 ## [v1.6.10] - 2026-10-17
 
