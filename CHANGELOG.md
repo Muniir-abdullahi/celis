@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.12] - 2026-10-17
+
+### Fixed
+
+- Synced `pnpm-lock.yaml` with the Vercel Analytics dependency in `package.json`
+  so Vercel frozen-lockfile installs succeed.
+
 ## [v1.6.11] - 2026-10-17
 
 ### Fixed
