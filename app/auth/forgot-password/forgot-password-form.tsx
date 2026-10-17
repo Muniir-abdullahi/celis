@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { requestPasswordReset } from "~/server/password-reset.functions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -16,10 +15,10 @@ import {
 } from "~/components/ui/card";
 import { CelisLogo } from "~/components/branding/celis-logo";
 export function ForgotPasswordForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +26,8 @@ export function ForgotPasswordForm() {
     setError(null);
 
     try {
-      const result = await requestPasswordReset({ data: { email } });
-      const params = new URLSearchParams({ token: result.token, email: result.email });
-      router.push(`/auth/reset-password?${params}`);
+      await requestPasswordReset({ data: { email } });
+      setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -47,11 +45,16 @@ export function ForgotPasswordForm() {
         <CardHeader className="text-center">
           <CardTitle>Reset your password</CardTitle>
           <CardDescription>
-            Enter your email to continue.
+            Enter your email and we’ll send a reset link if an account matches.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {submitted ? (
+            <div className="space-y-4 text-center">
+              <p className="text-sm text-celis-ink-secondary">If an account matches that email, a reset link will arrive shortly. Check your inbox and spam folder.</p>
+              <Button type="button" variant="outline" className="w-full" onClick={() => setSubmitted(false)}>Try another email</Button>
+            </div>
+          ) : <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -67,9 +70,9 @@ export function ForgotPasswordForm() {
               <p className="text-sm text-celis-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Checking..." : "Continue"}
+              {loading ? "Sending..." : "Send reset link"}
             </Button>
-          </form>
+          </form>}
 
           <p className="mt-6 text-center text-sm text-celis-ink-secondary">
             Remember your password?{" "}
