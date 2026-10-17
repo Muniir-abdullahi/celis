@@ -9,14 +9,11 @@ export interface CelisLogoProps {
   badge?: boolean;
 }
 
-/** Shared branding using the approved artwork in logo-assets/new. */
+/** Shared Celis logo artwork used throughout the application. */
 export function CelisLogo({ variant = "auto", size = 48, className, badge = false }: CelisLogoProps) {
   const markOnly = variant === "mark-only";
-  const adaptive = variant === "auto" || variant === "primary";
   const height = markOnly ? size : size * 1.5;
   const width = markOnly ? size : height * (4 / 3);
-  const imageClass = "h-full w-full object-contain";
-  const source = markOnly ? "celis-mark-on-white.png" : variant === "reversed" ? "celis-logo-on-navy.png" : "celis-logo-on-white.png";
 
   return (
     <span
@@ -26,21 +23,12 @@ export function CelisLogo({ variant = "auto", size = 48, className, badge = fals
       aria-label="Celis"
     >
       <Image
-        src={`/branding/${source}`}
+        src="/branding/celis-logo.png"
         alt=""
-        width={markOnly ? 256 : 800}
-        height={markOnly ? 256 : 600}
-        className={cn(imageClass, adaptive && "dark:hidden")}
+        width={419}
+        height={330}
+        className="h-full w-full object-contain"
       />
-      {adaptive && (
-        <Image
-          src="/branding/celis-logo-on-navy.png"
-          alt=""
-          width={800}
-          height={600}
-          className={cn(imageClass, "hidden dark:block")}
-        />
-      )}
     </span>
   );
 }

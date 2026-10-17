@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.13] - 2026-10-17
+
+### Changed
+
+- Use the supplied `logo-assets/LOGO PNG 1.png` artwork across the shared Celis
+  logo component.
+
 ## [v1.6.12] - 2026-10-17
 
 ### Fixed

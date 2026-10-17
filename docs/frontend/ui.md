@@ -118,13 +118,11 @@ Rules:
 
 ## Approved logo assets
 
-`app/components/branding/celis-logo.tsx` renders the supplied PNG artwork from
-`logo-assets/new`, published under `public/branding`. Headers, auth screens,
-admin navigation, and the footer share this component. Full logos preserve the
-800:600 aspect ratio; compact placements use the supplied 256px mark. The
-`auto` and `primary` variants select the navy-background artwork in dark mode. Full
-logos render at 1.5 times the requested size in height to keep the supplied stacked
-artwork readable in headers and auth screens. Root metadata
+`app/components/branding/celis-logo.tsx` renders `logo-assets/LOGO PNG 1.png`,
+published as `public/branding/celis-logo.png`. Headers, auth screens, admin
+navigation, and the footer share this component, so replacing this asset updates
+the logo throughout the app. Full logos render at 1.5 times the requested size in
+height to keep the supplied stacked artwork readable in headers and auth screens. Root metadata
 uses the supplied favicon and application icon for browser and Apple icons.
 These approved assets supersede the procedural logo in the original design
 specification. Logo changes are verified by typecheck and production build;
