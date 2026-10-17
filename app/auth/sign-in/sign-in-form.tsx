@@ -23,7 +23,11 @@ export function SignInForm({ redirect }: { redirect?: string }) {
     setLoading(true);
     setError(null);
     try {
-      await signIn({ data: { email, password } });
+      const result = await signIn({ data: { email, password } });
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
       await refresh();
       const destination = redirect?.startsWith("/") && !redirect.startsWith("//")
         ? redirect
@@ -79,7 +83,7 @@ export function SignInForm({ redirect }: { redirect?: string }) {
               />
             </div>
             {error && (
-              <p className="text-sm text-celis-destructive">{error}</p>
+              <p role="alert" className="text-sm text-celis-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}

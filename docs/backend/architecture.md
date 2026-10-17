@@ -67,6 +67,19 @@ Rules:
 
 ## Validation & Errors
 
+Sign-in returns a discriminated success/error result for validation and Supabase
+authentication failures. The form shows the returned message and does not
+refresh or navigate on failure. Network failures and provider outages show a
+retry message; invalid credentials, rate limits, and unconfirmed email addresses
+have separate messages. Provider internals are not returned. Unexpected local
+database failures still propagate as server errors.
+
+The cookie-based Supabase server client uses `app/lib/supabase/fetch.ts` with
+`cache: no-store`. It retries one transport failure for auth GET requests and
+password token exchanges, retaining the request body and headers. It does not
+retry HTTP responses, canceled requests, refresh-token exchanges, or account
+writes. Network logs contain only an error code and retry flag, never credentials.
+
 Rules:
 
 - Use Zod for user input.

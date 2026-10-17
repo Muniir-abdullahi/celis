@@ -3,10 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { env } from "../env";
 import type { Database } from "./database.types";
+import { createSupabaseFetch } from "./fetch";
+
+const supabaseFetch = createSupabaseFetch((input, init) => fetch(input, init));
 
 export async function getSupabaseServerClient() {
   const cookieStore = await cookies();
   return createServerClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    global: { fetch: supabaseFetch },
     cookies: {
       getAll() {
         return cookieStore.getAll();

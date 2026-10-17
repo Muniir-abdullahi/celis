@@ -58,3 +58,20 @@ Apply `drizzle/0029_encrypted_payment_gateways.sql` and `drizzle/0030_wallet_pay
 - Mark a listing paid only after the server validates the provider response and amount.
 - Treat provider timeouts and approved amount mismatches as `pending_reconciliation`; never offer an immediate retry.
 - Use sandbox credentials for automated and manual integration testing.
+
+## Web payment phone selection
+
+The shared payment dialog defaults to the signed-in seller's profile phone.
+The seller can replace it with any valid Somali wallet number before paying;
+only that entered value is sent to the payment action and persisted as the
+payment's `customerPhone`. It does not update the seller's contact number.
+No email is sent. While a request is in flight or awaiting reconciliation, the
+field stays locked to preserve the submitted payment context.
+
+Verification for v1.6.6: TypeScript and the seven focused payment checks pass
+using installed Node entrypoints. The payment regression checks cover the
+editable field-to-provider data path and pending-payment lock; no live wallet
+charge was made. Full-suite failures predate this change (old admin route paths
+and a privacy migration matcher). Production build attempts are blocked locally
+by a Turbopack CSS worker failure and a webpack `.next` EPERM write error.
+The pnpm shim requires an unavailable registry fetch; ESLint is not installed.

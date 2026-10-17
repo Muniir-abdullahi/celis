@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description,
   },
   twitter: { card: "summary_large_image", description },
-  icons: { icon: "/celis-favicon.svg" },
+  icons: { icon: "/branding/favicon.png", apple: "/branding/icon.png" },
 };
 
 export const viewport: Viewport = {

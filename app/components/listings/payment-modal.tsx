@@ -18,6 +18,7 @@ import {
 } from "~/server/payments.functions";
 import { WALLET_PROVIDERS } from "~/db/schema";
 import { formatPrice } from "~/lib/format";
+import { useAuth } from "~/lib/auth-context";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
 interface PaymentModalProps {
@@ -41,9 +42,11 @@ export function PaymentModal({
   featureListing = false,
   onSuccess,
 }: PaymentModalProps) {
+  const { user } = useAuth();
   const providers = (enabledProviders.length > 0 ? enabledProviders : WALLET_PROVIDERS) as string[];
   const [provider, setProvider] = useState<string>(providers[0]);
-  const [phone, setPhone] = useState("");
+  const [enteredPhone, setPhone] = useState<string | null>(null);
+  const phone = enteredPhone ?? user?.phone ?? "";
   const [merchantRef, setMerchantRef] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function PaymentModal({
 
   const reset = () => {
     setProvider(providers[0]);
-    setPhone("");
+    setPhone(null);
     setMerchantRef(null);
     setError(null);
     setSuccess(false);
@@ -142,10 +145,15 @@ export function PaymentModal({
                 id="phone"
                 type="tel"
                 placeholder="+25261XXXXXXX"
+                autoComplete="tel"
+                aria-describedby="payment-phone-help"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                disabled={!!merchantRef}
+                disabled={loading || !!merchantRef}
               />
+              <p id="payment-phone-help" className="text-sm text-celis-ink-secondary">
+                Enter the wallet number to receive the payment prompt. You can use a different number from your profile.
+              </p>
             </div>
 
             {merchantRef && (

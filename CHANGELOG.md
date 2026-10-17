@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.6.8] - 2026-10-16
+
+### Fixed
+
+- Retry one interrupted Supabase password sign-in or auth read, with uncached
+  requests and safe network error codes for diagnosing repeated timeouts.
+
+## [v1.6.7] - 2026-10-16
+
+### Fixed
+
+- Returned clear sign-in errors for Supabase connection failures, invalid credentials,
+  rate limits, and unconfirmed emails without throwing expected failures as HTTP 500s.
+- Increased the stacked logo size for better readability in navigation and auth screens.
+
+## [v1.6.6] - 2026-10-16
+
+### Fixed
+
+- Prefilled the payment wallet field from the seller profile while allowing a different payer number, with explicit payment-prompt guidance and a lock during submission.
+- Replaced shared Celis branding and browser icons with the approved artwork from logo-assets/new.
+
 ## [v1.6.5] - 2026-09-28
 
 ### Security

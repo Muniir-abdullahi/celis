@@ -114,3 +114,17 @@ Rules:
   a stale dialog snapshot); turning it off, plus Archive and Delete, open a
   confirm dialog that names the package. Delete is blocked server-side for
   packages referenced by any subscription — archive instead.
+
+## Approved logo assets
+
+`app/components/branding/celis-logo.tsx` renders the supplied PNG artwork from
+`logo-assets/new`, published under `public/branding`. Headers, auth screens,
+admin navigation, and the footer share this component. Full logos preserve the
+800:600 aspect ratio; compact placements use the supplied 256px mark. The
+`auto` and `primary` variants select the navy-background artwork in dark mode. Full
+logos render at 1.5 times the requested size in height to keep the supplied stacked
+artwork readable in headers and auth screens. Root metadata
+uses the supplied favicon and application icon for browser and Apple icons.
+These approved assets supersede the procedural logo in the original design
+specification. Logo changes are verified by typecheck and production build;
+visual sizing should also be checked in the browser.

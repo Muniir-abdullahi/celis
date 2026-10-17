@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { getSignInErrorMessage } from "~/lib/auth-errors";
 import {
   getSupabaseServerClient,
   getServiceSupabase,
@@ -101,7 +102,11 @@ export async function signUp(input: { data: unknown }) {
 }
 
 export async function signIn(input: { data: unknown }) {
-  const data = (credentialsSchema).parse(input.data);
+  const parsed = credentialsSchema.safeParse(input.data);
+  if (!parsed.success) {
+    return { success: false as const, error: "Enter a valid email address and password." };
+  }
+  const data = parsed.data;
 
     const supabase = await getSupabaseServerClient();
     const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -110,11 +115,14 @@ export async function signIn(input: { data: unknown }) {
     });
 
     if (error || !authData.user?.email) {
-      throw new Error(error?.message ?? "Invalid email or password");
+      return {
+        success: false as const,
+        error: getSignInErrorMessage(error ?? {}),
+      };
     }
 
     await ensureLocalUserRecord(authData.user.id, authData.user.email);
-    return { success: true, userId: authData.user.id };
+    return { success: true as const, userId: authData.user.id };
 }
 
 export async function signOut() {
