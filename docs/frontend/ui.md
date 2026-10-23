@@ -127,3 +127,8 @@ uses the supplied favicon and application icon for browser and Apple icons.
 These approved assets supersede the procedural logo in the original design
 specification. Logo changes are verified by typecheck and production build;
 visual sizing should also be checked in the browser.
+
+## Customer account creation
+
+Admin → Users → Customers → Create customer provisions buyers or sellers through the permission-checked admin-customers Server Action. The dialog supports individual/shop profiles and a server-controlled Google Play reviewer setting. See ../operations/google-play-reviewers.md for setup and mobile sign-in instructions.
+

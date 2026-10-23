@@ -1,5 +1,11 @@
 # Changelog
 
+## [v3.0.0] - 2026-10-23
+
+- Add permission-checked buyer/seller creation under Admin → Users → Customers, including individual/shop profiles, seller numbers, transactional writes, Auth cleanup on failure, and audit events without credentials.
+- Add server-controlled Google Play reviewer accounts using standard email/password login; mobile skips phone onboarding for these accounts only. Customer privileges and moderation/payment rules remain enforced.
+- Document reviewer setup and Play Console instructions in docs/operations/google-play-reviewers.md.
+
 ## [v1.6.14] - 2026-10-17
 
 ### Fixed

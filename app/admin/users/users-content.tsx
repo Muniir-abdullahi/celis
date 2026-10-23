@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { AdminTable } from "~/components/admin/admin-table";
+import { CreateCustomerDialog } from "~/components/admin/create-customer-dialog";
 import { PageHeader } from "~/components/admin/page-header";
 import { VerificationBadge } from "~/components/admin/status-badge";
 import {
@@ -218,9 +219,9 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
         title="Users"
         description="Manage customer accounts and internal staff separately"
         action={
-          domain === "internal" && canManageUsers ? (
+          canManageUsers ? (domain === "customer" ? <CreateCustomerDialog /> : (
             <Button onClick={() => setCreateOpen(true)}>Create internal user</Button>
-          ) : undefined
+          )) : undefined
         }
       />
 
