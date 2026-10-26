@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.0.1] - 2026-10-26
+
+### Fixed
+
+- Render account deletion information in the shared Celis bilingual legal layout.
+- Add a public Delete account link to the shared footer Account column.
+- Preserve numbered instructions, bullet lists, and semantic warning styles in legal pages.
+
 ## [v3.0.0] - 2026-10-23
 
 - Add permission-checked buyer/seller creation under Admin → Users → Customers, including individual/shop profiles, seller numbers, transactional writes, Auth cleanup on failure, and audit events without credentials.

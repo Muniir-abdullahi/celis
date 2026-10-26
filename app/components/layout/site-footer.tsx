@@ -57,6 +57,7 @@ export function SiteFooter() {
                   <li><Link href="/auth/sign-up" className="hover:text-celis-ink">Create account</Link></li>
                 </>
               )}
+              <li><Link href="/delete-account" className="hover:text-celis-ink">Delete account</Link></li>
             </ul>
           </div>
           <div>

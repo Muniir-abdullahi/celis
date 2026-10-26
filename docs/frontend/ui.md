@@ -132,3 +132,13 @@ visual sizing should also be checked in the browser.
 
 Admin → Users → Customers → Create customer provisions buyers or sellers through the permission-checked admin-customers Server Action. The dialog supports individual/shop profiles and a server-controlled Google Play reviewer setting. See ../operations/google-play-reviewers.md for setup and mobile sign-in instructions.
 
+
+## Account deletion information
+
+The public /delete-account route reads public/delete-account/index.html on the
+server and renders its English and Somali content through LegalDocument, matching
+Privacy and Terms with shared navigation, theme tokens, and language controls.
+The generated HTML remains the content source; do not hand-edit it. Shared legal
+prose styles preserve ordered steps, bullet lists, and the irreversible-deletion
+warning. The shared footer Account column links to this page for signed-in and
+signed-out visitors. This is an information page, not a web deletion action.

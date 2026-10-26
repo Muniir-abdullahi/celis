@@ -427,6 +427,21 @@
   .legal-prose p + p {
     @apply mt-3;
   }
+  .legal-prose ol {
+    @apply my-2 list-decimal space-y-1 pl-5;
+  }
+  .legal-prose ul {
+    @apply my-2 list-disc space-y-1 pl-5;
+  }
+  .legal-prose .warn {
+    @apply border-l-2 border-destructive pl-4;
+  }
+  .legal-prose .warn h2 {
+    @apply text-destructive;
+  }
+  .legal-prose .meta {
+    @apply mt-6 text-xs text-celis-ink-tertiary;
+  }
   .legal-prose a {
     @apply text-celis-primary underline underline-offset-2;
   }
