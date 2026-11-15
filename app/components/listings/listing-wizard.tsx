@@ -29,6 +29,8 @@ import {
   type CategoryConditionItem,
 } from "~/server/categories.functions";
 import { getListingPricingPreview } from "~/server/config.functions";
+import { updateListing } from "~/server/listing-edit.functions";
+import type { EditableListing } from "~/lib/listing-edit";
 import {
   DELIVERY_METHODS,
   WALLET_PROVIDERS,
@@ -68,6 +70,8 @@ interface ListingWizardProps {
   tiersConfig: ListingTiersConfig;
   monetizationModel: MonetizationModel;
   featureToggles: FeatureToggles;
+  /** When set, the wizard edits this listing instead of creating one. */
+  editListing?: EditableListing;
 }
 
 const STEPS = ["Details", "Pricing", "Photos", "Review"];
@@ -76,6 +80,29 @@ const STEP_2_KEYS = new Set(["images"]);
 
 function titleCase(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+/** Stored image URLs -> uploader entries (path/name are display keys only). */
+function toImageInputs(urls: string[]): ListingInput["images"] {
+  return urls.map((url, idx) => {
+    const tail = decodeURIComponent(url.split("?")[0].split("/").pop() || "");
+    return { url, path: tail || `image-${idx + 1}`, name: tail || `Photo ${idx + 1}` };
+  });
+}
+
+function formFromListing(listing: EditableListing): ListingInput {
+  const legacyCondition =
+    typeof listing.metadata.condition === "string" ? listing.metadata.condition : null;
+  return {
+    title: listing.title,
+    description: listing.description,
+    categoryId: listing.categoryId,
+    condition: listing.condition ?? legacyCondition,
+    price: listing.price,
+    deliveryMethod: listing.deliveryMethod,
+    images: toImageInputs(listing.images),
+    metadata: listing.metadata,
+  };
 }
 
 const emptyForm: ListingInput = {
@@ -95,7 +122,13 @@ export function ListingWizard({
   tiersConfig,
   monetizationModel,
   featureToggles,
+  editListing,
 }: ListingWizardProps) {
+  const isEdit = Boolean(editListing);
+  // Drafts are not published yet: saving continues into the normal publish /
+  // payment flow. Other edits only save (and may return to review).
+  const isDraftEdit = editListing?.status === "draft";
+  const runsPublishFlow = !isEdit || isDraftEdit;
   const enabledDeliveryMethods = useMemo(() => {
     return DELIVERY_METHODS.filter((m) => {
       if (m === "shipping") return featureToggles.platformShippingEnabled;
@@ -116,10 +149,14 @@ export function ListingWizard({
   const defaultDeliveryMethod = enabledDeliveryMethods[0] ?? "local_pickup";
 
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<ListingInput>({
-    ...emptyForm,
-    deliveryMethod: defaultDeliveryMethod as ListingInput["deliveryMethod"],
-  });
+  const [form, setForm] = useState<ListingInput>(() =>
+    editListing
+      ? formFromListing(editListing)
+      : {
+          ...emptyForm,
+          deliveryMethod: defaultDeliveryMethod as ListingInput["deliveryMethod"],
+        }
+  );
 
   // If toggles change and the selected delivery method is no longer available,
   // fall back to the first enabled option.
@@ -137,6 +174,10 @@ export function ListingWizard({
   const [serverFeeCents, setServerFeeCents] = useState<number>(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [submittedForReview, setSubmittedForReview] = useState(false);
+  const [savedEdit, setSavedEdit] = useState<{
+    status: string;
+    previousStatus: string;
+  } | null>(null);
   const [eligibility, setEligibility] = useState<{
     sellerType: "individual" | "shop";
     canList: boolean;
@@ -147,11 +188,13 @@ export function ListingWizard({
     CategoryConditionItem[]
   >([]);
   const [metadataSchema, setMetadataSchema] = useState<CategoryMetadataSchema | null>(null);
-  const [parentCategoryId, setParentCategoryId] = useState<string>("");
+  const [parentCategoryId, setParentCategoryId] = useState<string>(
+    editListing ? editListing.parentCategoryId ?? editListing.categoryId : ""
+  );
   const [subcategories, setSubcategories] = useState<CategoryListItem[]>([]);
 
   useEffect(() => {
-    fetchSellerListingEligibility({ data: { sellerId } }).then(setEligibility);
+    fetchSellerListingEligibility().then(setEligibility);
   }, [sellerId]);
 
   useEffect(() => {
@@ -366,12 +409,25 @@ export function ListingWizard({
 
   const handleSubmit = async () => {
     if (!validateStep()) return;
-    if (!eligibility?.canList) return;
+    if (runsPublishFlow && !eligibility?.canList) return;
     setSubmitting(true);
     try {
-      const result = await createListing({
-        data: { sellerId, listing: form },
-      });
+      let result: { id: string; feeCents?: number | null };
+      if (editListing) {
+        const saved = await updateListing({
+          data: { id: editListing.id, listing: form },
+        });
+        if (saved.status !== "draft") {
+          setSavedEdit({ status: saved.status, previousStatus: saved.previousStatus });
+          return;
+        }
+        result = saved;
+      } else {
+        result = await createListing({
+          data: { listing: form },
+        });
+      }
+      if (!eligibility) return;
       setCreatedListingId(result.id);
       setServerFeeCents(result.feeCents ?? 0);
 
@@ -379,16 +435,48 @@ export function ListingWizard({
         setPaymentOpen(true);
       } else {
         await submitShopListing({
-          data: { listingId: result.id, sellerId },
+          data: { listingId: result.id },
         });
         setSubmittedForReview(true);
       }
     } catch (err) {
-      setErrors({ submit: err instanceof Error ? err.message : "Failed to create listing" });
+      setErrors({
+        submit:
+          err instanceof Error
+            ? err.message
+            : isEdit
+            ? "Failed to save changes"
+            : "Failed to create listing",
+      });
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (savedEdit) {
+    const backToReview =
+      savedEdit.status === "pending_review" && savedEdit.previousStatus !== "pending_review";
+    return (
+      <Card className="mx-auto max-w-2xl">
+        <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+          <CheckCircle2 className="h-16 w-16 text-celis-success" />
+          <h2 className="text-2xl font-semibold">
+            {backToReview ? "Changes sent for review" : "Changes saved"}
+          </h2>
+          <p className="text-celis-ink-secondary">
+            {savedEdit.previousStatus === "active"
+              ? "Your listing is hidden while an admin reviews your changes. It will appear publicly again once approved."
+              : backToReview
+              ? "Your updated listing is waiting for admin approval."
+              : "Your listing is still waiting for admin approval."}
+          </p>
+          <Button asChild>
+            <a href="/dashboard">Go to dashboard</a>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (submittedForReview) {
     return (
@@ -412,7 +500,7 @@ export function ListingWizard({
     <>
       <Card className="mx-auto max-w-3xl">
         <CardHeader>
-          <CardTitle>Sell an item</CardTitle>
+          <CardTitle>{isEdit ? "Edit listing" : "Sell an item"}</CardTitle>
           <CardDescription>
             Step {step + 1} of {STEPS.length}: {STEPS[step]}
           </CardDescription>
@@ -430,7 +518,15 @@ export function ListingWizard({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {eligibility?.canList === false && (
+          {isEdit && editListing?.status === "active" && (
+            <div
+              role="status"
+              className="rounded-lg border border-celis-caution bg-celis-caution-subtle p-4 text-sm text-celis-ink"
+            >
+              This listing is live. Saving changes hides it until an admin approves the update.
+            </div>
+          )}
+          {runsPublishFlow && eligibility?.canList === false && (
             <div
               role="status"
               className="space-y-2 rounded-lg border border-celis-caution bg-celis-caution-subtle p-4 text-sm text-celis-ink"
@@ -466,6 +562,7 @@ export function ListingWizard({
                 <Label htmlFor="parentCategory">Category</Label>
                 <Combobox
                   value={parentCategoryId}
+                  disabled={isEdit}
                   onValueChange={(v) => {
                     setParentCategoryId(v);
                     setForm((prev) => ({
@@ -486,6 +583,7 @@ export function ListingWizard({
                   <Label htmlFor="subcategory">Subcategory</Label>
                   <Combobox
                     value={form.categoryId}
+                    disabled={isEdit}
                     onValueChange={(v) =>
                       setForm((prev) => ({
                         ...prev,
@@ -794,10 +892,14 @@ export function ListingWizard({
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={!canProceed || submitting || eligibility?.canList === false}
+              disabled={
+                !canProceed || submitting || (runsPublishFlow && eligibility?.canList === false)
+              }
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {eligibility?.requiresPayment
+              {!runsPublishFlow
+                ? "Save changes"
+                : eligibility?.requiresPayment
                 ? `Publish & pay ${formatPrice(serverFeeCents || preview.totalFeeCents)}`
                 : eligibility?.sellerType === "shop"
                 ? `Publish (package: ${

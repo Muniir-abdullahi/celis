@@ -31,7 +31,9 @@ import {
   Play,
   CheckCircle2,
   MoreHorizontal,
+  Pencil,
 } from "lucide-react";
+import { isListingEditable } from "~/lib/listing-edit";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -271,6 +273,14 @@ export function DashboardContent({ user, data }: DashboardContentProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-center">
+                      {isListingEditable(listing.status) && (
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href={`/listings/${listing.id}/edit`}>
+                            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                            Edit
+                          </Link>
+                        </Button>
+                      )}
                       {listing.status === "active" && featuredFeeCents > 0 && (
                         <Button
                           size="sm"

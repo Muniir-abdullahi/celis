@@ -50,7 +50,9 @@ import {
   Pause,
   Play,
   Trash2,
+  Pencil,
 } from "lucide-react";
+import { isListingEditable } from "~/lib/listing-edit";
 
 type Listing = NonNullable<Awaited<ReturnType<typeof fetchListingById>>>;
 type ListingReviews = Awaited<ReturnType<typeof fetchListingReviews>>;
@@ -233,6 +235,14 @@ export function ListingDetail({ listing, reviews, similar, metadataSchema, condi
 
                 {user?.id === listing.sellerId && (
                   <div className="grid gap-2">
+                    {isListingEditable(listing.status) && (
+                      <Button className="w-full" variant="outline" asChild>
+                        <Link href={`/listings/${listing.id}/edit`}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit listing
+                        </Link>
+                      </Button>
+                    )}
                     {listing.status === "active" && (
                       <>
                         <Button

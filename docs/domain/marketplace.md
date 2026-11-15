@@ -35,6 +35,10 @@ Key files:
 - `app/server/listing-interactions.functions.ts`
 - `app/listings/[id]/page.tsx`
 - `app/sell/page.tsx`
+- `app/listings/[id]/edit/page.tsx`
+- `app/server/listing-edit.server.ts`, `app/server/listing-edit.functions.ts`
+- `app/server/listing-details.server.ts` (condition + details rules shared by create/edit)
+- `app/lib/listing-edit.ts`
 - `app/search/page.tsx`
 - `app/browse/page.tsx`
 - `app/components/listings/**`
@@ -50,6 +54,28 @@ Rules:
   credits; the wizard shows the reason and a support contact when blocked.
 - Listing status changes require confirmation and audit consideration.
 - Listing expiry behavior belongs in the documented cron path.
+- **Seller identity:** seller-scoped server actions (`createListing`,
+  `submitShopListing`, `fetchSellerListingEligibility`, `updateListing`,
+  `getListingImageUploadUrl`) act as `requireCurrentUser()` and never accept a
+  seller id from the client. `submitShopListingForReview` also checks the
+  listing belongs to the seller and is still a `draft` before using a package
+  credit. Image uploads always go to the signed-in user's storage folder.
+- **Seller edit** (`/listings/[id]/edit`, reuses the listing wizard):
+  - Editable statuses: `draft`, `pending_review`, `active`, `rejected`.
+    Sold, expired, suspended and inactive listings are not seller-editable.
+  - The seller is always the signed-in user; other sellers' listings 404.
+  - The category is locked (`CATEGORY_LOCKED`).
+  - Condition and category details go through `prepareListingDetails`, the
+    same validation as create.
+  - Editing an `active` or `rejected` listing moves it to `pending_review`
+    (hidden until re-approved); a rejected listing that was never paid returns
+    to `draft`. Drafts continue into the normal publish / payment flow.
+  - Price: once a per-listing fee is paid, the new price may not fall in a
+    more expensive fee tier (`PRICE_TIER_CHANGED`); unpaid drafts are re-priced.
+    Paid fee snapshots are never changed by an edit.
+  - Each save runs in a transaction with a row lock and writes an
+    `listing.seller_edit` audit entry (previous/new status, changed fields,
+    reason) for moderators.
 - **Category details (listing metadata):** field definitions live in
   `category_fields` / `category_field_options`; a DB trigger mirrors them into
   `categories.metadata_schema` (also read by the mobile app). Supported types

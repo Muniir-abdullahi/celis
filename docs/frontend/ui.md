@@ -47,6 +47,9 @@ Key files:
 - `app/components/listings/listing-grid.tsx`
 - `app/components/listings/listing-wizard.tsx`
 - `app/components/listings/metadata-field-input.tsx` (renders every category-detail field type)
+- Listing wizard edit mode: pass `editListing` (from `getSellerListingForEdit`);
+  category pickers are disabled, live listings show a "back to review" notice,
+  and the final button becomes "Save changes" (drafts keep the publish flow).
 - `app/components/listings/search-filters.tsx`
 - `app/components/listings/payment-modal.tsx`
 - `app/components/listings/image-uploader.tsx`

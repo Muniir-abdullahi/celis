@@ -223,6 +223,25 @@ export async function submitShopListingForReview(
   id: string,
   sellerId: string
 ) {
+  // Only the owner may submit, and only an unsubmitted draft.
+  const [listing] = await db
+    .select({ sellerId: listings.sellerId, status: listings.status })
+    .from(listings)
+    .where(eq(listings.id, id))
+    .limit(1);
+  if (!listing) {
+    throw new CelisError("Listing not found", "LISTING_NOT_FOUND", 404);
+  }
+  if (listing.sellerId !== sellerId) {
+    throw new CelisError("Forbidden", "FORBIDDEN", 403);
+  }
+  if (listing.status !== "draft") {
+    throw new CelisError(
+      "Only draft listings can be submitted for review",
+      "LISTING_NOT_DRAFT",
+      400
+    );
+  }
   const eligibility = await getSellerListingEligibility(sellerId);
   if (eligibility.sellerType !== "shop" || !eligibility.canList) {
     throw new CelisError(

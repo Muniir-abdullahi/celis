@@ -1,5 +1,39 @@
 # Changelog
 
+## [v4.2.1] - 2026-11-15
+
+### Security
+
+- `createListing` created the listing under a `sellerId` sent by the browser
+  without checking it against the session, so a signed-in user could create
+  listings as another seller. It now always uses the signed-in user.
+- `submitShopListing` accepted any listing id and client `sellerId`, letting a
+  user submit another seller's draft for review (and spend a package credit).
+  It now uses the signed-in user and checks ownership and `draft` status.
+- `getListingImageUploadUrl` required no sign-in and wrote to a client-chosen
+  seller folder. It now requires sign-in and uses the user's own folder.
+- `fetchSellerListingEligibility` no longer reveals another seller's package
+  eligibility; it reads the signed-in user's.
+- Added `requireCurrentUser()` in `auth.server.ts`. Old clients that still send
+  `sellerId` keep working; the value is ignored.
+
+## [v4.2.0] - 2026-11-15
+
+### Added
+
+- Seller "Edit listing" page at `/listings/[id]/edit`, reusing the listing
+  wizard with the same field, condition, warranty and validation rules as
+  create. Edit buttons on the seller dashboard and on the listing page.
+- `updateListing` server action: owner-only (session user), category locked,
+  transactional with row lock and a `listing.seller_edit` audit entry.
+- Editing a live or rejected listing sends it back to review. A paid listing's
+  price can change only within its paid fee tier (or a cheaper one).
+
+### Changed
+
+- Condition and category-detail validation moved to the shared
+  `prepareListingDetails` helper used by both create and edit.
+
 ## [v4.1.0] - 2026-11-15
 
 ### Added

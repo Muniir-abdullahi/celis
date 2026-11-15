@@ -183,6 +183,16 @@ export async function hasPermission(
   return perms.includes(permissionKey);
 }
 
+/**
+ * The signed-in user, or throw. Server actions acting "as the seller" must
+ * use this identity and never a user/seller id supplied by the client.
+ */
+export async function requireCurrentUser(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+  return user;
+}
+
 export async function requirePermission(
   permissionKey: string
 ): Promise<CurrentUser> {
