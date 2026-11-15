@@ -50,6 +50,52 @@ Rules:
   credits; the wizard shows the reason and a support contact when blocked.
 - Listing status changes require confirmation and audit consideration.
 - Listing expiry behavior belongs in the documented cron path.
+- **Category details (listing metadata):** field definitions live in
+  `category_fields` / `category_field_options`; a DB trigger mirrors them into
+  `categories.metadata_schema` (also read by the mobile app). Supported types
+  are `text`, `textarea`, `number`, `boolean`, `single-select`, `multi-select`
+  and legacy `select`; other types (`photo-grid`, `video-link`) are skipped by
+  the web form. Select options are stored as values (e.g. `brand_new`) and
+  `getCategoryMetadataSchema` attaches `optionLabels` for display.
+  `createListing` keeps only keys defined for the category, drops empty values
+  and validates required/option rules server-side (`app/lib/category-metadata.ts`).
+  Multi-select values are stored as JSON string arrays.
+- **Field resolution:** `getCategoryMetadataSchema` builds the field list from
+  `category_fields` for the selected (sub)category plus ancestor fields with
+  `applies_to_descendants = true` (same rule as the listing RPC). The nearest
+  category wins a `field_key`; inherited fields come first. Categories with no
+  applicable rows fall back to the nearest legacy `metadata_schema` jsonb.
+- **Conditional fields:** `parent_field_id` + `parent_value` become
+  `showWhen`. A conditional field is shown, required and stored only while its
+  (visible) parent holds that value; booleans match `yes`/`true`, multi-select
+  matches if the array contains it. Hidden values are stripped client- and
+  server-side. Numeric `min_value`/`max_value` and `validation_rules.integer`
+  are enforced. The mobile app still reads the per-category jsonb mirror,
+  which does not include inherited or conditional metadata.
+- **Listing condition:** `listings.condition` is the only condition source.
+  Options come from `category_conditions` of the category or its nearest
+  ancestor that defines any; when options exist, a condition is required and
+  must be one of them (client and `createListing`), otherwise none is stored.
+  A `condition` category field is a reserved key: it is not rendered, stored
+  or validated as metadata. Conditional fields may still use
+  `parent field = condition` and are evaluated against the listing condition.
+  Older listings that only have `metadata.condition` display it as a fallback.
+- **Warranty:** `warranty_available` (Yes/No) gates `warranty_months`
+  (whole number 1–120, required only when Yes); both render in the wizard's
+  "Condition & Warranty" group (`CONDITION_GROUP_KEYS`). Neither is implied by
+  "Brand New". "Required when visible" uses `validation_rules.required`, never
+  the `required` column, because the mobile `validate_listing_fields` RPC
+  enforces that column unconditionally and ignores `parent_field_id`.
+- **Field sets (`scripts/seed-category-fields.ts`, run `pnpm db:seed-fields`):**
+  phones (brand, model, storage, RAM, color, SIM slots 0–4, battery health
+  only for used/refurbished, warranty pair); cars (adds year 1950–2027);
+  property sale/rent/apartments/land/commercial (region, size, bedrooms,
+  bathrooms, furnished, title deed, rent period for rentals); jobs
+  (job title, employer, pay period, experience, education — no item fields);
+  services (region, pricing, years of experience, home service). Sets are
+  seeded per subcategory, not inherited, so the mobile app's per-category
+  jsonb mirror sees them. `parent_value` may list comma-separated values
+  (any one matches). Product owns these lists.
 - Do not pack listing detail, payment, seller, image, and interaction logic into one large route file.
 
 ## Orders
@@ -96,6 +142,13 @@ Rules:
   must never create a fabricated wallet-provider transaction.
 - Payment-provider credentials are encrypted at rest and decrypted only inside server payment modules.
 - Client applications never choose the authoritative fee amount or receive provider credentials.
+- Sellers never choose the listing type. `listings.monetization_type` is
+  derived on the server from the admin `platform_monetization_model`
+  (`monetizationTypeForModel`: `fixed_only` → `fixed_rate`, `commission_only`
+  and `hybrid` → `commission`) at creation and re-snapshotted when payment
+  starts. Fees come only from `getListingPricing`. Existing rows keep their
+  stored value. The wizard shows fixed fee tiers only for `fixed_only` and
+  `hybrid`.
 - Waafi purchase success requires provider code `2001`, state `APPROVED`, a transaction ID, and amount reconciliation.
 
 ## Seller Packages

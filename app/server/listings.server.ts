@@ -17,7 +17,7 @@ import type { listings as listingsTable } from "~/db/schema";
 import { getSellerListingEligibility } from "./seller-packages.server";
 import { createNotification } from "./notifications.server";
 
-export type ListingMetadata = Record<string, string | number | boolean | null>;
+export type ListingMetadata = Record<string, string | number | boolean | string[] | null>;
 
 export type ListingPublic = {
   id: string;
@@ -102,7 +102,8 @@ function mapListingPublic(
 
 export async function insertDraftListing(
   sellerId: string,
-  input: ListingInput
+  input: ListingInput,
+  monetizationType: "fixed_rate" | "commission"
 ) {
   const [listing] = await db
     .insert(listings)
@@ -113,7 +114,7 @@ export async function insertDraftListing(
       categoryId: input.categoryId,
       condition: input.condition,
       price: input.price,
-      monetizationType: input.monetizationType,
+      monetizationType,
       deliveryMethod: input.deliveryMethod,
       images: input.images.map((i) => i.url),
       metadata: input.metadata,
@@ -437,7 +438,9 @@ export async function searchListings(filters: SearchListingsFilters) {
     for (const [key, value] of Object.entries(metadataFilters)) {
       if (value === "" || value === undefined) continue;
       conditions.push(
-        sql`(${listings.metadata} ->> ${key}) = ${value}`
+        // Scalar values match on text; multi-select values are stored as
+        // JSON arrays, so also match when the array contains the value.
+        sql`((${listings.metadata} ->> ${key}) = ${value} OR (${listings.metadata} -> ${key}) @> to_jsonb(${value}::text))`
       );
     }
   }

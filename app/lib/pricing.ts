@@ -1,5 +1,16 @@
 export type MonetizationModel = "fixed_only" | "commission_only" | "hybrid";
 
+/**
+ * The listing's stored `monetization_type`, derived from the platform
+ * monetization model (admin configuration). Sellers never choose it.
+ * `hybrid` charges a fee and a commission and is recorded as "commission".
+ */
+export function monetizationTypeForModel(
+  model: MonetizationModel
+): "fixed_rate" | "commission" {
+  return model === "fixed_only" ? "fixed_rate" : "commission";
+}
+
 export interface FeeRuleInput {
   id?: string;
   feeType: "listing_fee" | "commission" | "featured_fee";

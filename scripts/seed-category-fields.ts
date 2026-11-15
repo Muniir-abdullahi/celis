@@ -34,7 +34,53 @@ type FieldDef = {
   isFilter?: boolean;
   helpText?: string;
   options?: Array<{ value: string; label: string; group?: string }>;
+  /**
+   * Conditional display: shown only while field `parentKey` (same category)
+   * equals `parentValue`. Use `rules.required` (not `required`) for
+   * "required when visible" — the mobile RPC enforces the `required` column
+   * unconditionally.
+   */
+  parentKey?: string;
+  parentValue?: string;
+  minValue?: number;
+  maxValue?: number;
+  rules?: { required?: boolean; integer?: boolean; min?: number; max?: number };
 };
+
+/** Condition & Warranty: duration is asked only when a warranty exists. */
+const WARRANTY_FIELDS: FieldDef[] = [
+  { key: "warranty_available", label: "Warranty available?", type: "single-select",
+    helpText: "Choose Yes only if the item comes with a seller or manufacturer warranty.",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+    ] },
+  { key: "warranty_months", label: "Warranty duration (months)", type: "number",
+    helpText: "Whole number of months, for example 12.",
+    parentKey: "warranty_available", parentValue: "yes",
+    minValue: 1, maxValue: 120,
+    rules: { required: true, integer: true, min: 1, max: 120 } },
+];
+
+/** Condition codes treated as pre-owned (listing + legacy metadata codes). */
+const USED_CONDITION_CODES = "used,used_excellent,used_good,used_fair,refurbished";
+
+const REGION_FIELD: FieldDef = {
+  key: "region", label: "Region", type: "single-select", required: true, isFilter: true, searchable: true,
+  options: [
+    { value: "mogadishu", label: "Mogadishu" },
+    { value: "hargeisa", label: "Hargeisa" },
+    { value: "kismayo", label: "Kismayo" },
+    { value: "bosaso", label: "Bosaso" },
+    { value: "merka", label: "Merca" },
+    { value: "baidoa", label: "Baidoa" },
+  ],
+};
+
+const YES_NO = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+];
 
 const COMMON_FIELDS: FieldDef[] = [
   { key: "condition", label: "Condition", type: "single-select", required: true, isFilter: true, searchable: true,
@@ -99,8 +145,12 @@ const CARS_FIELDS: FieldDef[] = [
       { value: "hybrid", label: "Hybrid" },
       { value: "electric", label: "Electric" },
     ] },
-  { key: "mileage", label: "Mileage (km)", type: "number" },
-  { key: "engine_size", label: "Engine Size (L)", type: "number" },
+  { key: "year", label: "Year of Manufacture", type: "number", required: true, isFilter: true,
+    minValue: 1950, maxValue: 2027, rules: { integer: true, min: 1950, max: 2027 } },
+  { key: "mileage", label: "Mileage (km)", type: "number",
+    minValue: 0, rules: { integer: true, min: 0 } },
+  { key: "engine_size", label: "Engine Size (L)", type: "number",
+    minValue: 0, maxValue: 20, rules: { min: 0, max: 20 } },
   { key: "vin", label: "VIN / Chassis Number", type: "text",
     helpText: "It is safe to indicate Chassis number. Celis will hide 6 symbols." },
   { key: "registered", label: "Registered Car", type: "boolean" },
@@ -159,14 +209,18 @@ const PHONES_FIELDS: FieldDef[] = [
       { value: "green", label: "Green", group: "OTHER" },
     ] },
   { key: "battery_health", label: "Battery Health", type: "single-select",
+    // Asked only for pre-owned devices. Matches both the listing condition
+    // codes (category_conditions) and the legacy metadata condition codes.
+    parentKey: "condition", parentValue: USED_CONDITION_CODES,
     options: [
       { value: "100", label: "100%" },
       { value: "90_99", label: "90% - 99%" },
       { value: "80_89", label: "80% - 89%" },
       { value: "below_80", label: "Below 80%" },
     ] },
-  { key: "sim_slots", label: "SIM Slots", type: "number" },
-  { key: "warranty_months", label: "Warranty (months)", type: "number" },
+  { key: "sim_slots", label: "SIM Slots", type: "number",
+    minValue: 0, maxValue: 4, rules: { integer: true, min: 0, max: 4 } },
+  ...WARRANTY_FIELDS,
 ];
 
 const FASHION_FIELDS: FieldDef[] = [
@@ -199,10 +253,92 @@ const FASHION_FIELDS: FieldDef[] = [
   { key: "material", label: "Material", type: "text" },
 ];
 
-// slug -> fields
+// Property: no item condition / exchange; size and layout instead.
+const PROPERTY_SIZE: FieldDef = {
+  key: "size_sqm", label: "Size (m²)", type: "number", isFilter: true,
+  minValue: 1, rules: { min: 1 },
+};
+const PROPERTY_ROOMS: FieldDef[] = [
+  { key: "bedrooms", label: "Bedrooms", type: "number", required: true, isFilter: true,
+    minValue: 0, maxValue: 50, rules: { integer: true, min: 0, max: 50 } },
+  { key: "bathrooms", label: "Bathrooms", type: "number", isFilter: true,
+    minValue: 0, maxValue: 50, rules: { integer: true, min: 0, max: 50 } },
+  { key: "furnished", label: "Furnished", type: "single-select", isFilter: true,
+    options: [
+      { value: "furnished", label: "Furnished" },
+      { value: "semi_furnished", label: "Semi-furnished" },
+      { value: "unfurnished", label: "Unfurnished" },
+    ] },
+];
+const TITLE_DEED: FieldDef = {
+  key: "title_deed", label: "Title deed available", type: "single-select", options: YES_NO,
+};
+const RENT_PERIOD: FieldDef = {
+  key: "rent_period", label: "Rent period", type: "single-select", required: true, isFilter: true,
+  options: [
+    { value: "monthly", label: "Per month" },
+    { value: "yearly", label: "Per year" },
+  ],
+};
+
+// Jobs: the price is the offered pay; describe the role, not an item.
+const JOB_FIELDS: FieldDef[] = [
+  REGION_FIELD,
+  { key: "job_title", label: "Job title", type: "text", required: true, searchable: true },
+  { key: "company", label: "Company / employer", type: "text", searchable: true },
+  { key: "pay_period", label: "Pay period", type: "single-select", required: true,
+    options: [
+      { value: "hourly", label: "Per hour" },
+      { value: "daily", label: "Per day" },
+      { value: "monthly", label: "Per month" },
+    ] },
+  { key: "experience_level", label: "Experience level", type: "single-select", isFilter: true,
+    options: [
+      { value: "entry", label: "Entry level" },
+      { value: "mid", label: "Mid level" },
+      { value: "senior", label: "Senior" },
+    ] },
+  { key: "education_level", label: "Minimum education", type: "single-select",
+    options: [
+      { value: "none", label: "No requirement" },
+      { value: "secondary", label: "Secondary school" },
+      { value: "diploma", label: "Diploma" },
+      { value: "bachelor", label: "Bachelor's degree" },
+      { value: "master", label: "Master's degree or higher" },
+    ] },
+];
+
+// Services: how the service is priced and delivered.
+const SERVICE_FIELDS: FieldDef[] = [
+  REGION_FIELD,
+  { key: "pricing_type", label: "Pricing", type: "single-select", required: true,
+    options: [
+      { value: "fixed", label: "Fixed price" },
+      { value: "hourly", label: "Per hour" },
+      { value: "quote", label: "Starting price / on quote" },
+    ] },
+  { key: "experience_years", label: "Years of experience", type: "number",
+    minValue: 0, maxValue: 60, rules: { integer: true, min: 0, max: 60 } },
+  { key: "home_service", label: "Comes to your location", type: "single-select", options: YES_NO },
+];
+
+// slug -> fields. Sets are listed per subcategory (not inherited) so the
+// mobile app, which reads each category's own metadata_schema, sees them too.
 const SEED: Record<string, FieldDef[]> = {
   "vehicles-cars": [...COMMON_FIELDS, ...CARS_FIELDS],
   "electronics-phones-tablets": [...COMMON_FIELDS, ...PHONES_FIELDS],
+  "property-houses-sale": [REGION_FIELD, PROPERTY_SIZE, ...PROPERTY_ROOMS, TITLE_DEED],
+  "property-houses-rent": [REGION_FIELD, RENT_PERIOD, PROPERTY_SIZE, ...PROPERTY_ROOMS],
+  "property-apartments": [REGION_FIELD, PROPERTY_SIZE, ...PROPERTY_ROOMS],
+  "property-land": [REGION_FIELD, { ...PROPERTY_SIZE, required: true }, TITLE_DEED],
+  "property-commercial": [REGION_FIELD, PROPERTY_SIZE, TITLE_DEED],
+  "jobs-full-time": JOB_FIELDS,
+  "jobs-part-time": JOB_FIELDS,
+  "jobs-remote": JOB_FIELDS.filter((f) => f.key !== "region"),
+  "services-repair": SERVICE_FIELDS,
+  "services-construction": SERVICE_FIELDS,
+  "services-cleaning": SERVICE_FIELDS,
+  "services-beauty": SERVICE_FIELDS,
   "fashion-men-clothing": [...COMMON_FIELDS, ...FASHION_FIELDS],
   "fashion-women-clothing": [...COMMON_FIELDS, ...FASHION_FIELDS],
   fashion: [...COMMON_FIELDS, ...FASHION_FIELDS],
@@ -225,6 +361,9 @@ async function seedField(categoryId: string, def: FieldDef, sortOrder: number) {
       searchable: def.searchable ?? false,
       isFilter: def.isFilter ?? false,
       helpText: def.helpText ?? null,
+      minValue: def.minValue?.toString() ?? null,
+      maxValue: def.maxValue?.toString() ?? null,
+      validationRules: def.rules ?? {},
       sortOrder,
     })
     .onConflictDoUpdate({
@@ -236,6 +375,9 @@ async function seedField(categoryId: string, def: FieldDef, sortOrder: number) {
         searchable: def.searchable ?? false,
         isFilter: def.isFilter ?? false,
         helpText: def.helpText ?? null,
+        minValue: def.minValue?.toString() ?? null,
+        maxValue: def.maxValue?.toString() ?? null,
+        validationRules: def.rules ?? {},
         sortOrder,
         isActive: true,
         updatedAt: new Date(),
@@ -275,8 +417,25 @@ async function main() {
       console.warn(`Category "${slug}" not found; skipping field seed.`);
       continue;
     }
+    const idsByKey = new Map<string, string>();
     for (let i = 0; i < fields.length; i++) {
-      await seedField(category.id, fields[i], i);
+      const field = await seedField(category.id, fields[i], i);
+      idsByKey.set(fields[i].key, field.id);
+    }
+    // Second pass: link conditional fields to their parent field.
+    for (const def of fields) {
+      const id = idsByKey.get(def.key)!;
+      const parentId = def.parentKey ? idsByKey.get(def.parentKey) : undefined;
+      if (def.parentKey && !parentId) {
+        throw new Error(`Field "${def.key}" depends on unknown field "${def.parentKey}" in "${slug}".`);
+      }
+      await db
+        .update(categoryFields)
+        .set({
+          parentFieldId: parentId ?? null,
+          parentValue: parentId ? def.parentValue ?? null : null,
+        })
+        .where(eq(categoryFields.id, id));
     }
     console.log(`Seeded ${fields.length} fields for "${slug}".`);
   }

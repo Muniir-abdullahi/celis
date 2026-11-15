@@ -46,6 +46,7 @@ Key files:
 - `app/components/listings/listing-card.tsx`
 - `app/components/listings/listing-grid.tsx`
 - `app/components/listings/listing-wizard.tsx`
+- `app/components/listings/metadata-field-input.tsx` (renders every category-detail field type)
 - `app/components/listings/search-filters.tsx`
 - `app/components/listings/payment-modal.tsx`
 - `app/components/listings/image-uploader.tsx`
@@ -56,6 +57,10 @@ Rules:
 - Listing cards should show clear price, title, image, location, and seller context.
 - Search filters should map to server-side query parameters.
 - Listing wizard sections should be split if the file grows.
+- Category details: required fields are checked when leaving the Details step
+  and on publish (the wizard jumps back to the step with the error). The review
+  step and listing detail page hide empty optional fields and show option
+  labels, not stored codes. Number fields display normalized values ("012" → "12").
 - Payment modal changes are high-risk and require docs/changelog updates.
 
 ## Admin UI

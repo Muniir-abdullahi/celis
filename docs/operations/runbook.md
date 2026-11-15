@@ -38,6 +38,12 @@ Rules:
 
 - Commit Drizzle schema and generated migrations together.
 - Keep seed scripts deterministic.
+- `drizzle/0032_*`, `0033_*` and `0034_conditional_warranty_fields.sql` are
+  hand-written and not in `drizzle/meta/_journal.json`; apply them with
+  `psql "$DIRECT_URL" -f <file>` (or the Supabase SQL editor) in order. Each has
+  a `.down.sql` to revert. `0034` adds the "Warranty available?" parent field
+  to every category with `warranty_months`, makes the duration conditional
+  (1–120 whole months) and backfills existing listings without removing values.
 - Document new tables in `docs/domain/marketplace.md`.
 - Add indexes for repeated admin filters/search/sorts.
 

@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  DELIVERY_METHODS,
-  MONETIZATION_TYPES,
-  WALLET_PROVIDERS,
-} from "~/db/schema";
+import { DELIVERY_METHODS, WALLET_PROVIDERS } from "~/db/schema";
 
 export const phoneSchema = z
   .string()
@@ -34,7 +30,9 @@ export const listingSchema = z.object({
   categoryId: z.string().uuid("Select a category"),
   condition: z.string().max(100).nullable().optional(),
   price: z.coerce.number().int("Price must be a whole number").min(100, "Minimum price is $1.00"),
-  monetizationType: z.enum(MONETIZATION_TYPES),
+  // No monetizationType: the server derives it from the platform
+  // monetization model (see monetizationTypeForModel). Older clients that
+  // still send it are ignored because zod strips unknown keys.
   deliveryMethod: z.enum(DELIVERY_METHODS),
   location: z
     .object({
@@ -43,7 +41,17 @@ export const listingSchema = z.object({
     })
     .optional(),
   images: z.array(listingImageSchema).min(1, "Upload at least one image").max(8),
-  metadata: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).default({}),
+  metadata: z
+    .record(
+      z.union([
+        z.string().max(2000),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().max(200)).max(50),
+        z.null(),
+      ])
+    )
+    .default({}),
 });
 
 export const walletPaymentSchema = z.object({

@@ -31,7 +31,6 @@ import {
 import { getListingPricingPreview } from "~/server/config.functions";
 import {
   DELIVERY_METHODS,
-  MONETIZATION_TYPES,
   WALLET_PROVIDERS,
 } from "~/db/schema";
 import { formatDate, formatPrice } from "~/lib/format";
@@ -45,18 +44,15 @@ import {
   validateMetadata,
   normalizeMetadataValue,
   formatMetadataValue,
-  type MetadataField,
+  isEmptyMetadataValue,
+  getVisibleFields,
+  stripHiddenMetadata,
+  CONDITION_GROUP_KEYS,
   type CategoryMetadataSchema,
 } from "~/lib/category-metadata";
+import { MetadataFieldInput } from "./metadata-field-input";
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from "lucide-react";
 import type { CategoryListItem } from "~/server/categories.functions";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "~/components/ui/select";
 
 interface FeatureToggles {
   localPickupEnabled: boolean;
@@ -75,6 +71,8 @@ interface ListingWizardProps {
 }
 
 const STEPS = ["Details", "Pricing", "Photos", "Review"];
+const STEP_1_KEYS = new Set(["price", "deliveryMethod"]);
+const STEP_2_KEYS = new Set(["images"]);
 
 function titleCase(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -86,7 +84,6 @@ const emptyForm: ListingInput = {
   categoryId: "",
   condition: null,
   price: 0,
-  monetizationType: "fixed_rate",
   deliveryMethod: "local_pickup",
   images: [],
   metadata: {},
@@ -121,8 +118,6 @@ export function ListingWizard({
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<ListingInput>({
     ...emptyForm,
-    monetizationType:
-      monetizationModel === "commission_only" ? "commission" : "fixed_rate",
     deliveryMethod: defaultDeliveryMethod as ListingInput["deliveryMethod"],
   });
 
@@ -207,16 +202,16 @@ export function ListingWizard({
 
   const updateMetadata = (key: string, value: unknown) => {
     const field = metadataSchema?.fields.find((f) => f.key === key);
-    const normalized = field
-      ? normalizeMetadataValue(field.type, value)
-      : value === null || value === undefined
-      ? null
-      : typeof value === "string" || typeof value === "number" || typeof value === "boolean"
-      ? value
-      : null;
+    const normalized = field ? normalizeMetadataValue(field.type, value) : null;
+    // Changing a parent field can hide conditional children; drop their
+    // values so stale answers are never submitted.
     setForm((prev) => ({
       ...prev,
-      metadata: { ...prev.metadata, [key]: normalized },
+      metadata: stripHiddenMetadata(
+        metadataSchema,
+        { ...prev.metadata, [key]: normalized },
+        { condition: prev.condition ?? null }
+      ),
     }));
     setErrors((prev) => {
       const next = { ...prev };
@@ -225,9 +220,43 @@ export function ListingWizard({
     });
   };
 
+  /** Earliest wizard step that owns one of the given error keys. */
+  const firstStepWithError = (fieldErrors: Record<string, string>) => {
+    const keys = Object.keys(fieldErrors).filter((k) => k !== "submit");
+    if (keys.some((k) => !STEP_1_KEYS.has(k) && !STEP_2_KEYS.has(k))) return 0;
+    if (keys.some((k) => STEP_1_KEYS.has(k))) return 1;
+    if (keys.some((k) => STEP_2_KEYS.has(k))) return 2;
+    return null;
+  };
+
+  /** The listing condition can also gate conditional category fields. */
+  const updateCondition = (condition: string | null) => {
+    setForm((prev) => ({
+      ...prev,
+      condition,
+      metadata: stripHiddenMetadata(metadataSchema, prev.metadata, { condition }),
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.condition;
+      return next;
+    });
+  };
+
+  /** Errors for the Details step: listing condition + category details. */
+  const detailErrors = () => {
+    const fieldErrors = validateMetadata(metadataSchema, form.metadata, {
+      condition: form.condition ?? null,
+    });
+    if (categoryConditions.length > 0 && !form.condition) {
+      fieldErrors.condition = "Condition is required";
+    }
+    return fieldErrors;
+  };
+
   const validateStep = () => {
     const result = listingSchema.safeParse(form);
-    const metadataErrors = validateMetadata(metadataSchema, form.metadata);
+    const metadataErrors = detailErrors();
     if (!result.success || Object.keys(metadataErrors).length > 0) {
       const fieldErrors: Record<string, string> = { ...metadataErrors };
       if (!result.success) {
@@ -237,11 +266,27 @@ export function ListingWizard({
         });
       }
       setErrors(fieldErrors);
+      const errorStep = firstStepWithError(fieldErrors);
+      if (errorStep !== null) setStep(errorStep);
       return false;
     }
     setErrors({});
     return true;
   };
+
+  const visibleFields = useMemo(
+    () => getVisibleFields(metadataSchema, form.metadata, { condition: form.condition ?? null }),
+    [metadataSchema, form.metadata, form.condition]
+  );
+  // Warranty questions sit with Condition; everything else is a category detail.
+  const conditionGroupFields = useMemo(
+    () => visibleFields.filter((f) => CONDITION_GROUP_KEYS.has(f.key)),
+    [visibleFields]
+  );
+  const detailGroupFields = useMemo(
+    () => visibleFields.filter((f) => !CONDITION_GROUP_KEYS.has(f.key)),
+    [visibleFields]
+  );
 
   const canProceed = useMemo(() => {
     if (step === 0) {
@@ -278,14 +323,6 @@ export function ListingWizard({
     () => categoryConditions.map((c) => ({ value: c.code, label: c.label })),
     [categoryConditions]
   );
-  const monetizationOptions = useMemo(
-    () =>
-      MONETIZATION_TYPES.map((t) => ({
-        value: t,
-        label: t === "fixed_rate" ? "Fixed-rate listing" : "Commission on sale",
-      })),
-    []
-  );
   const deliveryOptions = useMemo(
     () => DELIVERY_METHODS.map((m) => ({ value: m, label: titleCase(m) })),
     []
@@ -311,6 +348,13 @@ export function ListingWizard({
   }, [form.price, form.condition, form.categoryId, tiersConfig, monetizationModel]);
 
   const handleNext = () => {
+    if (step === 0) {
+      const metadataErrors = detailErrors();
+      if (Object.keys(metadataErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...metadataErrors }));
+        return;
+      }
+    }
     if (step < STEPS.length - 1) {
       setStep((s) => s + 1);
     }
@@ -428,6 +472,7 @@ export function ListingWizard({
                       ...prev,
                       categoryId: "",
                       condition: null,
+                      metadata: {},
                     }));
                   }}
                   placeholder="Select a category"
@@ -446,6 +491,7 @@ export function ListingWizard({
                         ...prev,
                         categoryId: v,
                         condition: null,
+                        metadata: {},
                       }))
                     }
                     placeholder="Select a subcategory"
@@ -458,16 +504,39 @@ export function ListingWizard({
                 </div>
               )}
 
-              {form.categoryId && (
-                <div className="space-y-2">
-                  <Label htmlFor="condition">Condition</Label>
-                  <Combobox
-                    value={form.condition ?? undefined}
-                    onValueChange={(v) =>
-                      updateField("condition", v as NonNullable<ListingInput["condition"]>)
-                    }
-                    options={conditionOptions}
-                  />
+              {form.categoryId &&
+                (conditionOptions.length > 0 || conditionGroupFields.length > 0) && (
+                <div className="space-y-4 rounded-lg border border-celis-border bg-celis-surface-inset p-4">
+                  <h3 className="text-sm font-medium text-celis-ink">
+                    {conditionGroupFields.length > 0 ? "Condition & Warranty" : "Condition"}
+                  </h3>
+                  {conditionOptions.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="condition">
+                        Condition
+                        <span className="text-celis-destructive"> *</span>
+                      </Label>
+                      <Combobox
+                        value={form.condition ?? undefined}
+                        onValueChange={(v) => updateCondition(v || null)}
+                        options={conditionOptions}
+                        placeholder="Select condition"
+                        label="Condition"
+                      />
+                      {errors.condition && (
+                        <p className="text-sm text-celis-destructive">{errors.condition}</p>
+                      )}
+                    </div>
+                  )}
+                  {conditionGroupFields.map((field) => (
+                    <MetadataFieldInput
+                      key={field.key}
+                      field={field}
+                      value={form.metadata[field.key]}
+                      error={errors[field.key]}
+                      onChange={(value) => updateMetadata(field.key, value)}
+                    />
+                  ))}
                 </div>
               )}
 
@@ -485,12 +554,12 @@ export function ListingWizard({
                 )}
               </div>
 
-              {metadataSchema && metadataSchema.fields.length > 0 && (
+              {detailGroupFields.length > 0 && (
                 <div className="space-y-4 rounded-lg border border-celis-border bg-celis-surface-inset p-4">
                   <h3 className="text-sm font-medium text-celis-ink">
                     Category details
                   </h3>
-                  {metadataSchema.fields.map((field) => (
+                  {detailGroupFields.map((field) => (
                     <MetadataFieldInput
                       key={field.key}
                       field={field}
@@ -527,15 +596,6 @@ export function ListingWizard({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="monetizationType">Listing type</Label>
-                <Combobox
-                  value={form.monetizationType}
-                  onValueChange={(v) => updateField("monetizationType", v as typeof form.monetizationType)}
-                  options={monetizationOptions}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="deliveryMethod">Delivery</Label>
                 <Combobox
                   value={form.deliveryMethod}
@@ -545,6 +605,9 @@ export function ListingWizard({
 
               </div>
 
+              {/* Fixed fee tiers only apply when the platform charges listing
+                  fees (fixed_only / hybrid); commission-only shows no tiers. */}
+              {monetizationModel !== "commission_only" && (
               <div className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary">
                 <p className="mb-2 font-medium text-celis-ink">Listing fee tiers</p>
                 <ul className="space-y-1">
@@ -572,6 +635,7 @@ export function ListingWizard({
                   })}
                 </ul>
               </div>
+              )}
 
               <div className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary">
                 <p className="font-medium text-celis-ink">
@@ -631,23 +695,36 @@ export function ListingWizard({
                     {allCategories.find((c) => c.id === form.categoryId)?.name ?? "—"}
                   </dd>
                 </div>
-                <div className="flex justify-between py-2">
-                  <dt className="text-celis-ink-secondary">Condition</dt>
-                  <dd className="font-medium">
-                    {categoryConditions.find((c) => c.code === form.condition)?.label ??
-                      form.condition?.replace(/_/g, " ") ??
-                      "—"}
-                  </dd>
-                </div>
-                {metadataSchema &&
-                  metadataSchema.fields.map((field) => (
-                    <div key={field.key} className="flex justify-between py-2">
-                      <dt className="text-celis-ink-secondary">{field.label}</dt>
-                      <dd className="font-medium">
-                        {formatMetadataValue(field, form.metadata[field.key])}
-                      </dd>
-                    </div>
-                  ))}
+                {categoryConditions.length > 0 && (
+                  <div className="flex justify-between py-2">
+                    <dt className="text-celis-ink-secondary">Condition</dt>
+                    <dd
+                      className={`font-medium ${form.condition ? "" : "text-celis-destructive"}`}
+                    >
+                      {categoryConditions.find((c) => c.code === form.condition)?.label ??
+                        form.condition?.replace(/_/g, " ") ??
+                        "Required"}
+                    </dd>
+                  </div>
+                )}
+                {visibleFields.map((field) => {
+                    const value = form.metadata[field.key];
+                    const empty = isEmptyMetadataValue(value);
+                    // Optional details the seller skipped are not shown.
+                    if (empty && !field.required) return null;
+                    return (
+                      <div key={field.key} className="flex justify-between gap-4 py-2">
+                        <dt className="text-celis-ink-secondary">{field.label}</dt>
+                        <dd
+                          className={`max-w-[60%] text-right font-medium ${
+                            empty ? "text-celis-destructive" : ""
+                          }`}
+                        >
+                          {empty ? "Required" : formatMetadataValue(field, value)}
+                        </dd>
+                      </div>
+                    );
+                  })}
                 <div className="flex justify-between py-2">
                   <dt className="text-celis-ink-secondary">Price</dt>
                   <dd className="font-medium">{formatPrice(form.price)}</dd>
@@ -744,76 +821,5 @@ export function ListingWizard({
         onSuccess={() => setSubmittedForReview(true)}
       />
     </>
-  );
-}
-
-function MetadataFieldInput({
-  field,
-  value,
-  error,
-  onChange,
-}: {
-  field: MetadataField;
-  value: unknown;
-  error?: string;
-  onChange: (value: unknown) => void;
-}) {
-  const normalized = normalizeMetadataValue(field.type, value);
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={`meta-${field.key}`}>
-        {field.label}
-        {field.required && <span className="text-celis-destructive"> *</span>}
-      </Label>
-      {field.type === "text" && (
-        <Input
-          id={`meta-${field.key}`}
-          value={normalized as string}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
-      {field.type === "number" && (
-        <Input
-          id={`meta-${field.key}`}
-          type="number"
-          value={normalized as number}
-          onChange={(e) =>
-            onChange(
-              e.target.value === "" ? "" : Number(e.target.value)
-            )
-          }
-        />
-      )}
-      {field.type === "boolean" && (
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={normalized as boolean}
-            onChange={(e) => onChange(e.target.checked)}
-            className="h-4 w-4 rounded border-celis-border"
-          />
-          Yes
-        </label>
-      )}
-      {field.type === "select" && (
-        <Select
-          value={normalized as string}
-          onValueChange={(v) => onChange(v)}
-        >
-          <SelectTrigger id={`meta-${field.key}`} className="w-full">
-            <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent position="popper" className="max-h-[50vh]">
-            {(field.options ?? []).map((opt) => (
-              <SelectItem key={opt} value={opt}>
-                {opt}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-      {error && <p className="text-sm text-celis-destructive">{error}</p>}
-    </div>
   );
 }

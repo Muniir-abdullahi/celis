@@ -11,6 +11,7 @@ import {
   getFeaturedListingFeeCents,
 } from "./config.server";
 import { featureListing } from "./listings.server";
+import { monetizationTypeForModel } from "~/lib/pricing";
 import { db } from "~/db";
 import { listings } from "~/db/schema";
 import { eq } from "drizzle-orm";
@@ -83,8 +84,7 @@ export async function initiatePayment(input: { data: unknown }) {
           // Snapshot the pricing inputs/outputs on the listing so the fee
           // cannot change between payment and approval, and reconciliation
           // is possible.
-          const monetizationType: "fixed_rate" | "commission" =
-            pricing.monetizationModel === "fixed_only" ? "fixed_rate" : "commission";
+          const monetizationType = monetizationTypeForModel(pricing.monetizationModel);
           await db
             .update(listings)
             .set({

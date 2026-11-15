@@ -6,7 +6,11 @@ import {
   fetchListingReviews,
   fetchSimilarListings,
 } from "~/server/listings.functions";
-import { fetchCategoryMetadataSchema } from "~/server/categories.functions";
+import {
+  fetchCategoryConditions,
+  fetchCategoryMetadataSchema,
+} from "~/server/categories.functions";
+import { resolveListingConditionLabel } from "~/lib/category-metadata";
 import { getFeaturedListingFee } from "~/server/config.functions";
 import { formatPrice } from "~/lib/format";
 import { ListingDetail } from "./listing-detail";
@@ -40,12 +44,13 @@ export default async function ListingPage({ params }: RouteParams) {
     notFound();
   }
 
-  const [reviews, similar, metadataSchema, featuredFeeCents] = await Promise.all([
+  const [reviews, similar, metadataSchema, conditions, featuredFeeCents] = await Promise.all([
     fetchListingReviews({ data: { id } }),
     fetchSimilarListings({
       data: { listingId: listing.id, categoryId: listing.categoryId },
     }),
     fetchCategoryMetadataSchema({ data: { categoryId: listing.categoryId } }),
+    fetchCategoryConditions({ data: { categoryId: listing.categoryId } }),
     getFeaturedListingFee(),
   ]);
 
@@ -55,6 +60,11 @@ export default async function ListingPage({ params }: RouteParams) {
       reviews={reviews}
       similar={similar}
       metadataSchema={metadataSchema}
+      conditionLabel={resolveListingConditionLabel(
+        listing.condition,
+        listing.metadata,
+        conditions
+      )}
       featuredFeeCents={featuredFeeCents}
       user={user}
     />

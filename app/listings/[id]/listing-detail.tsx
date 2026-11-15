@@ -31,7 +31,11 @@ import {
 } from "~/server/listings.functions";
 import { PaymentModal } from "~/components/listings/payment-modal";
 import { formatPrice, formatRelativeDate } from "~/lib/format";
-import { formatMetadataValue } from "~/lib/category-metadata";
+import {
+  formatMetadataValue,
+  getVisibleFields,
+  isEmptyMetadataValue,
+} from "~/lib/category-metadata";
 import {
   MapPin,
   Package,
@@ -56,6 +60,8 @@ type ListingDetailProps = {
   reviews: ListingReviews;
   similar: SimilarListings;
   metadataSchema: CategoryMetadataSchema | null;
+  /** Resolved label for the listing condition (null when none). */
+  conditionLabel: string | null;
   featuredFeeCents: number;
   user: CurrentUser | null;
 };
@@ -76,7 +82,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function ListingDetail({ listing, reviews, similar, metadataSchema, featuredFeeCents, user }: ListingDetailProps) {
+export function ListingDetail({ listing, reviews, similar, metadataSchema, conditionLabel, featuredFeeCents, user }: ListingDetailProps) {
   const router = useRouter();
   const [showContact, setShowContact] = useState(false);
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
@@ -169,9 +175,7 @@ export function ListingDetail({ listing, reviews, similar, metadataSchema, featu
             <div>
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{listing.categoryName}</Badge>
-                <Badge variant="outline">
-                  {listing.condition?.replace(/_/g, " ") ?? "N/A"}
-                </Badge>
+                {conditionLabel && <Badge variant="outline">{conditionLabel}</Badge>}
                 {listing.isFeatured && (
                   <Badge
                     variant="default"
@@ -427,10 +431,11 @@ export function ListingDetail({ listing, reviews, similar, metadataSchema, featu
                     <MapPin className="h-4 w-4" />
                     <span>Location: seller&apos;s area</span>
                   </div>
-                  {metadataSchema &&
-                    metadataSchema.fields.map((field) => {
+                  {getVisibleFields(metadataSchema, listing.metadata, {
+                    condition: listing.condition ?? listing.metadata.condition ?? null,
+                  }).map((field) => {
                       const value = listing.metadata[field.key];
-                      if (value === undefined || value === null || value === "") return null;
+                      if (isEmptyMetadataValue(value)) return null;
                       return (
                         <div
                           key={field.key}

@@ -22,8 +22,14 @@ import {
   getSellerListingEligibility,
   getCurrentSellerSubscription,
 } from "./seller-packages.server";
-import { getCategoryMetadataSchema } from "./categories.server";
-import { validateMetadata } from "~/lib/category-metadata";
+import { getCategoryConditions, getCategoryMetadataSchema } from "./categories.server";
+import { monetizationTypeForModel } from "~/lib/pricing";
+import {
+  compactMetadata,
+  RESERVED_METADATA_KEYS,
+  stripHiddenMetadata,
+  validateMetadata,
+} from "~/lib/category-metadata";
 
 const createListingSchema = z.object({
   sellerId: z.string().uuid(),
@@ -80,8 +86,45 @@ export async function createListing(input: { data: unknown }) {
     if (!user?.phone) {
       throw new Error("Add a phone number to your account before listing an item.");
     }
-    const metadataSchema = await getCategoryMetadataSchema(data.listing.categoryId);
-    const metadataErrors = validateMetadata(metadataSchema, data.listing.metadata);
+    const [metadataSchema, conditions] = await Promise.all([
+      getCategoryMetadataSchema(data.listing.categoryId),
+      getCategoryConditions(data.listing.categoryId),
+    ]);
+
+    // The listing condition is the single source of truth (listings.condition).
+    // It is required whenever the category defines condition options, and must
+    // be one of them; categories without options store no condition.
+    if (conditions.length > 0) {
+      if (!data.listing.condition) {
+        throw new Error("Condition is required");
+      }
+      if (!conditions.some((c) => c.code === data.listing.condition)) {
+        throw new Error("Condition is invalid for this category");
+      }
+    } else {
+      data.listing.condition = null;
+    }
+    const context = { condition: data.listing.condition ?? null };
+
+    // Persist only fields defined for this category (never reserved keys such
+    // as `condition`), and never store blanks for optional fields.
+    const allowedKeys = metadataSchema
+      ? new Set(metadataSchema.fields.map((f) => f.key))
+      : null;
+    // Values of conditional fields whose condition is not met are dropped too.
+    data.listing.metadata = compactMetadata(
+      stripHiddenMetadata(
+        metadataSchema,
+        Object.fromEntries(
+          Object.entries(data.listing.metadata).filter(
+            ([key]) =>
+              !RESERVED_METADATA_KEYS.has(key) && (!allowedKeys || allowedKeys.has(key))
+          )
+        ),
+        context
+      )
+    );
+    const metadataErrors = validateMetadata(metadataSchema, data.listing.metadata, context);
     if (Object.keys(metadataErrors).length > 0) {
       throw new Error(
         Object.entries(metadataErrors)
@@ -89,12 +132,17 @@ export async function createListing(input: { data: unknown }) {
           .join("; ")
       );
     }
-    const listing = await insertDraftListing(data.sellerId, data.listing);
-
+    // Pricing (and the listing type) come from admin configuration, never
+    // from the seller.
     const { getListingPricing } = await import("./config.server");
     const pricing = await getListingPricing(
       data.listing.price,
       data.listing.categoryId
+    );
+    const listing = await insertDraftListing(
+      data.sellerId,
+      data.listing,
+      monetizationTypeForModel(pricing.monetizationModel)
     );
 
     const { updateListingFees } = await import("./listings.server");

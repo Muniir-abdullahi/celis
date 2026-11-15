@@ -17,9 +17,11 @@ import {
   fetchCategoryConditions,
   type CategoryListItem,
 } from "~/server/categories.functions";
-import type {
-  CategoryMetadataSchema,
-  MetadataField,
+import {
+  isSelectType,
+  metadataOptionLabel,
+  type CategoryMetadataSchema,
+  type MetadataField,
 } from "~/lib/category-metadata";
 
 export interface SearchFiltersState {
@@ -144,7 +146,9 @@ export function SearchFilters({
       );
     }
 
-    if (field.type === "select" && field.options && field.options.length > 0) {
+    // Single- and multi-select fields filter on one option value; multi-select
+    // listings match when their stored array contains it (see searchListings).
+    if (isSelectType(field.type) && field.options && field.options.length > 0) {
       return (
         <div className="space-y-2" key={field.key}>
           <Label htmlFor={id}>{field.label}</Label>
@@ -159,7 +163,7 @@ export function SearchFilters({
               <SelectItem value="">Any</SelectItem>
               {field.options.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {option}
+                  {metadataOptionLabel(field, option)}
                 </SelectItem>
               ))}
             </SelectContent>

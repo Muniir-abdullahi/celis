@@ -1,5 +1,101 @@
 # Changelog
 
+## [v4.1.0] - 2026-11-15
+
+### Added
+
+- Category field sets in `seed-category-fields.ts` for Property (houses for
+  sale/rent, apartments, land, commercial), Jobs (full-time, part-time,
+  remote) and Services (repair, construction, cleaning, beauty), so these
+  categories no longer show phone/item fields. Cars gain a bounded
+  "Year of Manufacture"; phone SIM slots are bounded 0–4.
+- Battery Health is asked only when the listing condition is used or
+  refurbished.
+- Conditional `parent_value` accepts a comma-separated list; any one value
+  matches.
+
+### Notes
+
+- Data changes apply only after running `pnpm db:seed-fields` (upsert; fields
+  no longer listed are not deactivated). Field lists await product approval.
+
+## [v4.0.0] - 2026-11-15
+
+### Changed
+
+- Removed the seller-facing "Listing type" dropdown (Fixed-rate listing /
+  Commission on sale) from the listing wizard. `monetizationType` is no longer
+  part of the listing input; `createListing` derives it from the admin
+  `platform_monetization_model` via `monetizationTypeForModel`, the same rule
+  the payment flow already used. Older clients that still send it are ignored.
+  Fees were already computed from configuration only, so billing is unchanged;
+  existing listings keep their stored type.
+- The wizard's "Listing fee tiers" box is hidden when the platform runs
+  commission-only, since fixed tier fees do not apply.
+
+## [v3.2.0] - 2026-11-15
+
+### Added
+
+- Migration `0034_conditional_warranty_fields.sql` (hand-applied, with
+  `.down.sql`): adds a "Warranty available?" Yes/No field to every category
+  with `warranty_months`, and makes "Warranty duration (months)" appear only
+  for Yes, as a required whole number from 1 to 120. Existing listings with a
+  positive warranty are backfilled to Yes (duration rounded to whole months);
+  zero becomes No. No listing values are removed.
+- Wizard groups Condition and the warranty questions under
+  "Condition & Warranty".
+- `seed-category-fields.ts` supports conditional fields (`parentKey`,
+  `parentValue`), numeric bounds and validation rules, and seeds the warranty
+  pair for phones.
+
+## [v3.1.1] - 2026-11-15
+
+### Fixed
+
+- Removed the duplicate Condition row: `listings.condition` is now the single
+  condition source and the `condition` category field is no longer rendered or
+  stored as listing metadata.
+- Condition is required (client and server) whenever the category, or its
+  nearest ancestor, defines condition options, and must be a valid option.
+- Subcategories without their own condition list inherit the nearest
+  ancestor's options in the wizard and search filters.
+- Listing detail shows the condition label (e.g. "Brand New") and falls back to
+  legacy `metadata.condition` for older listings.
+- Conditional category fields can depend on the listing condition.
+
+## [v3.1.0] - 2026-11-15
+
+### Added
+
+- Category details now resolve from `category_fields` with inheritance:
+  subcategories get ancestor fields marked `applies_to_descendants` plus their
+  own, with subcategory fields overriding inherited keys.
+- Conditional fields (`parent_field_id` / `parent_value`): shown, required and
+  stored only when the parent field holds the configured value; stale values
+  are dropped when the parent changes and again on the server.
+- Numeric field bounds (`min_value`, `max_value`) and whole-number rules
+  (`validation_rules.integer`) are validated client- and server-side.
+
+## [v3.0.2] - 2026-11-15
+
+### Fixed
+
+- Listing wizard now renders `single-select`, `multi-select` and `textarea`
+  category fields emitted by the `category_fields` sync; previously Condition,
+  Region, Brand, Storage, RAM, Color and Battery Health showed a label with no
+  input, so values could not be entered and the review showed "—".
+- Required category details are validated when leaving the Details step, and a
+  failed publish returns the seller to the step with the error instead of
+  failing silently on Review.
+- Review step and listing detail page hide empty optional fields and show
+  option labels (e.g. "Brand New") instead of stored codes.
+- `createListing` stores only fields defined for the category and drops blank
+  values; listing metadata accepts string arrays for multi-select.
+- Search filters render single/multi-select fields as dropdowns and match
+  multi-select listings whose stored array contains the chosen value.
+- Number fields normalize leading zeros ("012" → "12").
+
 ## [v3.0.1] - 2026-10-26
 
 ### Fixed
