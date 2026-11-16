@@ -119,7 +119,7 @@ const CARS_FIELDS: FieldDef[] = [
       { value: "bmw", label: "BMW" },
     ] },
   { key: "model", label: "Model", type: "text", required: true },
-  { key: "color", label: "Color", type: "multi-select", searchable: true,
+  { key: "color", label: "Color", type: "single-select", searchable: true,
     options: [
       { value: "black", label: "Black", group: "POPULAR" },
       { value: "gray", label: "Gray", group: "POPULAR" },
@@ -199,7 +199,7 @@ const PHONES_FIELDS: FieldDef[] = [
       { value: "8gb", label: "8 GB" },
       { value: "12gb", label: "12 GB" },
     ] },
-  { key: "color", label: "Color", type: "multi-select", searchable: true,
+  { key: "color", label: "Color", type: "single-select", searchable: true,
     options: [
       { value: "black", label: "Black", group: "POPULAR" },
       { value: "white", label: "White", group: "POPULAR" },
@@ -241,7 +241,7 @@ const FASHION_FIELDS: FieldDef[] = [
       { value: "xl", label: "XL" },
       { value: "xxl", label: "XXL" },
     ] },
-  { key: "color", label: "Color", type: "multi-select", searchable: true,
+  { key: "color", label: "Color", type: "single-select", searchable: true,
     options: [
       { value: "black", label: "Black" },
       { value: "white", label: "White" },

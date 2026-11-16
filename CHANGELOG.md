@@ -1,5 +1,21 @@
 # Changelog
 
+## [v4.2.3] - 2026-11-16
+
+### Fixed (IT report 16 Nov 2026)
+
+- 02 Listing fee: a price outside every tier no longer falls back to the
+  Premium tier. Empty prices showed "Premium tier, $2.50" and $1–$9.99
+  listings were actually charged $2.50. Unpriced amounts now show a neutral
+  "Enter a price to calculate the listing fee" summary, block the Pricing
+  step, and are refused by every charging path (`PRICE_OUTSIDE_TIERS`, 422).
+  Stale preview replies can no longer restore a cleared fee. The mobile
+  listing-fee route returns the real error status instead of 500.
+- 01 Color: Color is single-select; the wizard keeps the chip look but one
+  click replaces the previous color (radio group). Migration `0036` switches
+  existing color fields and keeps one color on listings that saved several;
+  the seed is updated.
+
 ## [v4.2.2] - 2026-11-15
 
 ### Fixed (mobile app compatibility)

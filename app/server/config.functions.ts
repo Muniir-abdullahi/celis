@@ -5,7 +5,7 @@ import {
   getListingFeeCents,
   getListingTiersConfig,
   getPlatformMonetizationModel,
-  getListingPricing,
+  computeListingPricing,
   getPlatformConfig,
   getFeaturedListingFeeCents,
 } from "./config.server";
@@ -60,5 +60,5 @@ const pricingPreviewSchema = z.object({
 export async function getListingPricingPreview(input: { data: unknown }) {
   const data = (pricingPreviewSchema).parse(input.data);
 
-    return getListingPricing(data.price, data.categoryId);
+    return computeListingPricing(data.price, data.categoryId);
 }

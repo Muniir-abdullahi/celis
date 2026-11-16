@@ -62,6 +62,12 @@ const SUPPORTED_TYPES = new Set<string>(METADATA_FIELD_TYPES);
  */
 export const RESERVED_METADATA_KEYS = new Set(["condition"]);
 
+/**
+ * Single-choice fields drawn as one-choice chips (radio semantics) instead of
+ * a dropdown: one click selects a value and replaces the previous one.
+ */
+export const SINGLE_CHOICE_CHIP_KEYS = new Set(["color"]);
+
 /** Category fields shown in the wizard's "Condition & Warranty" group. */
 export const CONDITION_GROUP_KEYS = new Set(["warranty_available", "warranty_months"]);
 

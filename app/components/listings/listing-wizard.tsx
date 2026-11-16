@@ -38,6 +38,8 @@ import {
 import { formatDate, formatPrice } from "~/lib/format";
 import {
   calculateListingPricing,
+  findListingTier,
+  minimumTierPriceCents,
   type ListingTiersConfig,
   type ListingPricing,
   type MonetizationModel,
@@ -336,13 +338,17 @@ export function ListingWizard({
       return form.title.length >= 5 && form.description.length >= 20 && form.categoryId;
     }
     if (step === 1) {
-      return form.price >= 100 && form.deliveryMethod;
+      // A price must fall in a fee tier before the seller can continue.
+      return findListingTier(form.price, tiersConfig) !== null && form.deliveryMethod;
     }
     if (step === 2) {
       return form.images.length > 0;
     }
     return true;
-  }, [step, form]);
+  }, [step, form, tiersConfig]);
+
+  const minimumPriceCents = useMemo(() => minimumTierPriceCents(tiersConfig), [tiersConfig]);
+  const priceBelowMinimum = form.price > 0 && findListingTier(form.price, tiersConfig) === null;
 
   const [preview, setPreview] = useState<ListingPricing>(() =>
     calculateListingPricing(form.price, tiersConfig, {
@@ -371,23 +377,35 @@ export function ListingWizard({
     []
   );
   useEffect(() => {
+    let cancelled = false;
+    const local = () =>
+      setPreview(calculateListingPricing(form.price, tiersConfig, { monetizationModel }));
+    // Empty / below-minimum price: show the neutral summary immediately and
+    // never ask the server for a fee.
+    if (!form.categoryId || findListingTier(form.price, tiersConfig) === null) {
+      local();
+      return;
+    }
     const timeout = setTimeout(() => {
-      if (!form.categoryId) {
-        setPreview(
-          calculateListingPricing(form.price, tiersConfig, {
-            monetizationModel,
-          })
-        );
-        return;
-      }
       getListingPricingPreview({
         data: {
           price: form.price,
           categoryId: form.categoryId,
         },
-      }).then(setPreview);
+      })
+        .then((next) => {
+          // Ignore a slow reply for a price the seller has since changed or
+          // cleared, so a stale Premium fee can't reappear.
+          if (!cancelled) setPreview(next);
+        })
+        .catch(() => {
+          if (!cancelled) local();
+        });
     }, 250);
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [form.price, form.condition, form.categoryId, tiersConfig, monetizationModel]);
 
   const handleNext = () => {
@@ -691,6 +709,11 @@ export function ListingWizard({
                   />
                 </div>
                 {errors.price && <p className="text-sm text-celis-destructive">{errors.price}</p>}
+                {!errors.price && priceBelowMinimum && Number.isFinite(minimumPriceCents) && (
+                  <p className="text-sm text-celis-destructive">
+                    Enter a price of at least {formatPrice(minimumPriceCents)}.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -735,6 +758,14 @@ export function ListingWizard({
               </div>
               )}
 
+              {!preview.priced ? (
+              <div
+                role="status"
+                className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary"
+              >
+                Enter a price to calculate the listing fee.
+              </div>
+              ) : (
               <div className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary">
                 <p className="font-medium text-celis-ink">
                   {preview.tierLabel} tier
@@ -765,6 +796,7 @@ export function ListingWizard({
                 )}
                 <p>Expires on {formatDate(preview.expiresAt)}.</p>
               </div>
+              )}
             </div>
           )}
 

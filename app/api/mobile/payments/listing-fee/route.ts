@@ -4,6 +4,7 @@ import { db } from "~/db";
 import { listings } from "~/db/schema";
 import { getServiceSupabase } from "~/lib/supabase/server";
 import { getListingPricing } from "~/server/config.server";
+import { isCelisError } from "~/lib/errors";
 import { initiateWalletPayment } from "~/server/payments.server";
 
 const requestSchema = z.object({
@@ -96,6 +97,7 @@ export async function POST(request: Request) {
       durationMs: Date.now() - startedAt,
       message,
     });
-    return json({ message }, 500);
+    const status = isCelisError(cause) ? cause.status : 500;
+    return json({ message, code: isCelisError(cause) ? cause.code : undefined }, status);
   }
 }

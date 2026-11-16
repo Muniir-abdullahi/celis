@@ -107,6 +107,8 @@ Rules:
   or validated as metadata. Conditional fields may still use
   `parent field = condition` and are evaluated against the listing condition.
   Older listings that only have `metadata.condition` display it as a fallback.
+- **Color** is single-select (one value) for every category; the wizard draws
+  it as one-click chips (`SINGLE_CHOICE_CHIP_KEYS`), radio semantics.
 - **Warranty:** `warranty_available` (Yes/No) gates `warranty_months`
   (whole number 1–120, required only when Yes); both render in the wizard's
   "Condition & Warranty" group (`CONDITION_GROUP_KEYS`). Neither is implied by
@@ -187,6 +189,15 @@ Rules:
   must never create a fabricated wallet-provider transaction.
 - Payment-provider credentials are encrypted at rest and decrypted only inside server payment modules.
 - Client applications never choose the authoritative fee amount or receive provider credentials.
+- **Fee tiers:** `findListingTier` returns the tier containing the price or
+  null — there is no fallback tier. An empty price or one below the lowest
+  tier's minimum is "unpriced": the wizard shows "Enter a price to calculate
+  the listing fee" and blocks Next, and every charging path (`createListing`,
+  `updateListing`, `initiatePayment`, the mobile listing-fee route) uses
+  `getListingPricing`, which throws `PRICE_OUTSIDE_TIERS` (422).
+  `computeListingPricing` (may be unpriced) is only for previews and expiry
+  of existing listings. Admins set tier ranges in Admin → Settings → Pricing;
+  to accept $1–$9.99 listings, set the first tier's minimum to $1.00.
 - Sellers never choose the listing type. `listings.monetization_type` is
   derived on the server from the admin `platform_monetization_model`
   (`monetizationTypeForModel`: `fixed_only` → `fixed_rate`, `commission_only`

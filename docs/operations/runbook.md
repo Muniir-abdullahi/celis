@@ -49,6 +49,12 @@ Rules:
   `validation_rules.required` to `requiredWhenVisible`, removes comma-list
   conditions, and rewrites listing metadata arrays/booleans to the mobile
   format ("a,b", "yes"/"no").
+- `0036_single_choice_color.sql` (after 0035; idempotent): makes every
+  `color` field single-select and keeps the first color on listings that
+  saved several.
+- Pricing: if listings under $10 must be accepted, set the Basic tier's
+  minimum price to $1.00 in Admin → Settings → Pricing (the listing form's
+  minimum). Prices in no tier cannot be charged (`PRICE_OUTSIDE_TIERS`).
 - Document new tables in `docs/domain/marketplace.md`.
 - Add indexes for repeated admin filters/search/sorts.
 

@@ -89,8 +89,38 @@ export function parseListingTiersConfig(raw: unknown): ListingTiersConfig {
   };
 }
 
+/**
+ * The tier whose [minCents, maxCents] range contains the price, or null.
+ * There is deliberately no fallback: a price outside every tier (empty, or
+ * below the lowest tier's minimum) must never be priced as Premium.
+ */
+export function findListingTier(
+  priceCents: number,
+  config: ListingTiersConfig
+): PricingTier | null {
+  if (!Number.isFinite(priceCents) || priceCents <= 0) return null;
+  return (
+    config.tiers.find((t) => {
+      const aboveMin = priceCents >= t.minCents;
+      const belowMax = t.maxCents === null || priceCents <= t.maxCents;
+      return aboveMin && belowMax;
+    }) ?? null
+  );
+}
+
+/** Lowest price (cents) that falls in a tier. */
+export function minimumTierPriceCents(config: ListingTiersConfig): number {
+  return config.tiers.reduce(
+    (min, t) => Math.min(min, t.minCents),
+    Number.POSITIVE_INFINITY
+  );
+}
+
 export interface ListingPricing {
-  tierLabel: string;
+  /** False when the price falls in no tier: no fee is computed or payable. */
+  priced: boolean;
+  /** Null when `priced` is false. */
+  tierLabel: string | null;
   baseFeeCents: number;
   feeCents: number;
   commissionBps: number | null;
@@ -123,12 +153,30 @@ export function calculateListingPricing(
     currency = config.currency,
   } = options;
 
-  const tier =
-    config.tiers.find((t) => {
-      const aboveMin = priceCents >= t.minCents;
-      const belowMax = t.maxCents === null || priceCents <= t.maxCents;
-      return aboveMin && belowMax;
-    }) ?? config.tiers[config.tiers.length - 1];
+  const tier = findListingTier(priceCents, config);
+  if (!tier) {
+    // Unpriced: no tier, no fee. Expiry uses the lowest tier's duration so
+    // display / approval paths for older out-of-range listings stay sane;
+    // getListingPricing refuses to charge such prices.
+    const lowest = [...config.tiers].sort((a, b) => a.minCents - b.minCents)[0];
+    const expiryDays = lowest?.expiryDays ?? 7;
+    const expiresAt = new Date(referenceDate);
+    expiresAt.setDate(expiresAt.getDate() + expiryDays);
+    return {
+      priced: false,
+      tierLabel: null,
+      baseFeeCents: 0,
+      feeCents: 0,
+      commissionBps: null,
+      commissionAmountCents: null,
+      totalFeeCents: 0,
+      expiryDays,
+      expiresAt,
+      currency,
+      appliedFeeRuleId: null,
+      monetizationModel,
+    };
+  }
 
   const baseFeeCents = tier.feeCents;
 
@@ -163,6 +211,7 @@ export function calculateListingPricing(
   expiresAt.setDate(expiresAt.getDate() + tier.expiryDays);
 
   return {
+    priced: true,
     tierLabel: tier.label,
     baseFeeCents,
     feeCents,

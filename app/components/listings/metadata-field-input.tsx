@@ -9,6 +9,7 @@ import { cn } from "~/lib/utils";
 import {
   isSingleSelectType,
   metadataOptionLabel,
+  SINGLE_CHOICE_CHIP_KEYS,
   toBooleanValue,
   toMultiValues,
   type MetadataField,
@@ -91,7 +92,17 @@ export function MetadataFieldInput({ field, value, error, onChange }: MetadataFi
       )}
 
       {isSingleSelectType(field.type) &&
-        (options.length > 0 ? (
+        (options.length > 0 && SINGLE_CHOICE_CHIP_KEYS.has(field.key) ? (
+          // One click selects and replaces the previous choice (radio group).
+          <ChoiceChips
+            id={id}
+            exclusive
+            label={field.label}
+            options={options}
+            selected={typeof value === "string" && value ? [value] : []}
+            onToggle={(v) => onChange(v)}
+          />
+        ) : options.length > 0 ? (
           <Combobox
             value={typeof value === "string" ? value : undefined}
             onValueChange={(v) => onChange(v || null)}
@@ -172,21 +183,33 @@ function ChoiceChips({
   options,
   selected,
   onToggle,
+  exclusive = false,
+  label,
 }: {
   id: string;
   options: { value: string; label: string }[];
   selected: string[];
   onToggle: (value: string) => void;
+  /** Radio semantics: exactly one value, announced as a radio group. */
+  exclusive?: boolean;
+  label?: string;
 }) {
   return (
-    <div id={id} role="group" className="flex flex-wrap gap-2">
+    <div
+      id={id}
+      role={exclusive ? "radiogroup" : "group"}
+      aria-label={label}
+      className="flex flex-wrap gap-2"
+    >
       {options.map((opt) => {
         const active = selected.includes(opt.value);
         return (
           <button
             key={opt.value}
             type="button"
-            aria-pressed={active}
+            {...(exclusive
+              ? { role: "radio", "aria-checked": active }
+              : { "aria-pressed": active })}
             onClick={() => onToggle(opt.value)}
             className={cn(
               "rounded-full border px-3 py-1.5 text-sm transition-colors",

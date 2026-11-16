@@ -1,8 +1,11 @@
 import { db } from "~/db";
 import { platformConfigs, categoryFees } from "~/db/schema";
 import { eq, and, isNull, or } from "drizzle-orm";
+import { CelisError } from "~/lib/errors";
+import { formatPrice } from "~/lib/format";
 import {
   calculateListingPricing,
+  minimumTierPriceCents,
   parseListingTiersConfig,
   type ListingPricing,
   type MonetizationModel,
@@ -99,7 +102,36 @@ async function getActiveCategoryFee(
   );
 }
 
+/**
+ * Authoritative listing fee for anything that creates, stores or charges a
+ * fee. Throws PRICE_OUTSIDE_TIERS when the price falls in no configured tier,
+ * so an empty / too-low price can never produce a payable (Premium) charge.
+ */
 export async function getListingPricing(
+  priceCents: number,
+  categoryId?: string | null
+): Promise<ListingPricing> {
+  const pricing = await computeListingPricing(priceCents, categoryId);
+  if (!pricing.priced) {
+    const config = await getListingTiersConfig();
+    const min = minimumTierPriceCents(config);
+    throw new CelisError(
+      Number.isFinite(min)
+        ? `Enter a price of at least ${formatPrice(min)} to calculate the listing fee.`
+        : "Listing fee tiers are not configured.",
+      "PRICE_OUTSIDE_TIERS",
+      422,
+      { minPriceCents: Number.isFinite(min) ? min : null }
+    );
+  }
+  return pricing;
+}
+
+/**
+ * Pricing that may be unpriced (`priced: false`), for previews and for
+ * display/expiry of existing listings. Never use it to set a charge.
+ */
+export async function computeListingPricing(
   priceCents: number,
   categoryId?: string | null
 ): Promise<ListingPricing> {

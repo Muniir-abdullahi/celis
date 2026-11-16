@@ -307,8 +307,9 @@ export async function approveListing(id: string, reviewerId: string) {
   // so a later config change cannot alter the amount charged or expiry.
   let expiresAt = listing.expiresAt;
   if (!expiresAt) {
-    const { getListingPricing } = await import("./config.server");
-    const pricing = await getListingPricing(listing.price, listing.categoryId);
+    // Expiry only (no charge): tolerate older listings priced outside tiers.
+    const { computeListingPricing } = await import("./config.server");
+    const pricing = await computeListingPricing(listing.price, listing.categoryId);
     expiresAt = pricing.expiresAt;
   }
 
