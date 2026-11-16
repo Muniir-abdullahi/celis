@@ -44,6 +44,11 @@ Rules:
   a `.down.sql` to revert. `0034` adds the "Warranty available?" parent field
   to every category with `warranty_months`, makes the duration conditional
   (1–120 whole months) and backfills existing listings without removing values.
+- `0035_mobile_compatible_category_data.sql` (apply after 0034, before
+  `pnpm db:seed-fields`; idempotent): moves conditional fields'
+  `validation_rules.required` to `requiredWhenVisible`, removes comma-list
+  conditions, and rewrites listing metadata arrays/booleans to the mobile
+  format ("a,b", "yes"/"no").
 - Document new tables in `docs/domain/marketplace.md`.
 - Add indexes for repeated admin filters/search/sorts.
 

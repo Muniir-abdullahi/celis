@@ -138,8 +138,8 @@ export function SearchFilters({
             </SelectTrigger>
             <SelectContent position="popper" className="max-h-[50vh]">
               <SelectItem value="">Any</SelectItem>
-              <SelectItem value="true">Yes</SelectItem>
-              <SelectItem value="false">No</SelectItem>
+              <SelectItem value="yes">Yes</SelectItem>
+              <SelectItem value="no">No</SelectItem>
             </SelectContent>
           </Select>
         </div>

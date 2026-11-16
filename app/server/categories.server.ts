@@ -168,7 +168,10 @@ export async function getCategoryMetadataSchema(categoryId: string): Promise<Cat
         key: f.fieldKey,
         type: f.type,
         label: f.label,
-        required: f.required || rules.required === true,
+        // validateMetadata only checks visible fields, so all three mean
+        // "required when shown" on the web.
+        required:
+          f.required || rules.required === true || rules.requiredWhenVisible === true,
         options: options.map((o) => o.value),
         optionLabels: Object.fromEntries(options.map((o) => [o.value, o.label])),
         helpText: f.helpText,

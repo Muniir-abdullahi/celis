@@ -51,8 +51,10 @@ test("any-of matching also works for booleans and multi-select parents", () => {
   assert.deepEqual(keys({ a: false, c: ["x"] }), ["a", "c"]);
 });
 
-test("phones gate battery health on condition and bound SIM slots", () => {
-  assert.match(seed, /key: "battery_health"[\s\S]*?parentKey: "condition", parentValue: USED_CONDITION_CODES/);
+test("battery health is not gated (mobile can't do any-of conditions); SIM slots bounded", () => {
+  const battery = seed.slice(seed.indexOf('key: "battery_health"'), seed.indexOf('key: "sim_slots"'));
+  assert.doesNotMatch(battery, /parentKey|parentValue/);
+  assert.match(seed, /parentValue must be a single value/);
   assert.match(seed, /key: "sim_slots"[\s\S]*?rules: \{ integer: true, min: 0, max: 4 \}/);
 });
 

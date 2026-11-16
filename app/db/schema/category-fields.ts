@@ -27,7 +27,16 @@ export const FIELD_TYPES = [
 export type CategoryFieldType = (typeof FIELD_TYPES)[number];
 
 export type ValidationRules = {
+  /**
+   * Always required. The mobile app enforces this on every field, even hidden
+   * conditional ones — use `requiredWhenVisible` for conditional fields.
+   */
   required?: boolean;
+  /**
+   * Required only while a conditional field is shown. Web-only: the mobile
+   * app and the listing RPC ignore it, so it never blocks a hidden field.
+   */
+  requiredWhenVisible?: boolean;
   min?: number;
   max?: number;
   minLength?: number;

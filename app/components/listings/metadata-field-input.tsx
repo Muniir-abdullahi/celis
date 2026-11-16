@@ -9,6 +9,8 @@ import { cn } from "~/lib/utils";
 import {
   isSingleSelectType,
   metadataOptionLabel,
+  toBooleanValue,
+  toMultiValues,
   type MetadataField,
 } from "~/lib/category-metadata";
 
@@ -74,10 +76,16 @@ export function MetadataFieldInput({ field, value, error, onChange }: MetadataFi
             { value: "true", label: "Yes" },
             { value: "false", label: "No" },
           ]}
-          selected={value === true ? ["true"] : value === false ? ["false"] : []}
+          selected={
+            toBooleanValue(value) === true
+              ? ["true"]
+              : toBooleanValue(value) === false
+              ? ["false"]
+              : []
+          }
           onToggle={(v) => {
             const next = v === "true";
-            onChange(value === next ? null : next);
+            onChange(toBooleanValue(value) === next ? null : next);
           }}
         />
       )}
@@ -101,9 +109,9 @@ export function MetadataFieldInput({ field, value, error, onChange }: MetadataFi
           <ChoiceChips
             id={id}
             options={options}
-            selected={Array.isArray(value) ? value.map(String) : []}
+            selected={toMultiValues(value)}
             onToggle={(v) => {
-              const current = Array.isArray(value) ? value.map(String) : [];
+              const current = toMultiValues(value);
               const next = current.includes(v)
                 ? current.filter((x) => x !== v)
                 : [...current, v];

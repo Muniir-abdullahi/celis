@@ -85,7 +85,8 @@ Rules:
   `getCategoryMetadataSchema` attaches `optionLabels` for display.
   `createListing` keeps only keys defined for the category, drops empty values
   and validates required/option rules server-side (`app/lib/category-metadata.ts`).
-  Multi-select values are stored as JSON string arrays.
+  Multi-select values are stored as comma-joined strings and booleans as
+  "yes"/"no" (see Mobile compatibility below).
 - **Field resolution:** `getCategoryMetadataSchema` builds the field list from
   `category_fields` for the selected (sub)category plus ancestor fields with
   `applies_to_descendants = true` (same rule as the listing RPC). The nearest
@@ -109,20 +110,38 @@ Rules:
 - **Warranty:** `warranty_available` (Yes/No) gates `warranty_months`
   (whole number 1–120, required only when Yes); both render in the wizard's
   "Condition & Warranty" group (`CONDITION_GROUP_KEYS`). Neither is implied by
-  "Brand New". "Required when visible" uses `validation_rules.required`, never
-  the `required` column, because the mobile `validate_listing_fields` RPC
-  enforces that column unconditionally and ignores `parent_field_id`.
+  "Brand New". "Required when visible" uses `validation_rules.requiredWhenVisible`
+  (web-only), never the `required` column or `validation_rules.required`.
 - **Field sets (`scripts/seed-category-fields.ts`, run `pnpm db:seed-fields`):**
   phones (brand, model, storage, RAM, color, SIM slots 0–4, battery health
-  only for used/refurbished, warranty pair); cars (adds year 1950–2027);
+  (optional, not conditional), warranty pair); cars (adds year 1950–2027);
   property sale/rent/apartments/land/commercial (region, size, bedrooms,
   bathrooms, furnished, title deed, rent period for rentals); jobs
   (job title, employer, pay period, experience, education — no item fields);
   services (region, pricing, years of experience, home service). Sets are
   seeded per subcategory, not inherited, so the mobile app's per-category
-  jsonb mirror sees them. `parent_value` may list comma-separated values
-  (any one matches). Product owns these lists.
+  jsonb mirror sees them. Product owns these lists.
 - Do not pack listing detail, payment, seller, image, and interaction logic into one large route file.
+
+## Mobile compatibility
+
+The Expo app (`D:\celis mobile`) reads and writes the same Supabase rows
+directly (RPC `save_listing_with_fields`, `category_fields`,
+`category_field_options`) and calls `/api/mobile/payments/listing-fee`. Shared
+data must follow its contract:
+
+- Multi-select metadata: comma-joined string (`"black,white"`).
+- Boolean metadata: `"yes"` / `"no"`.
+  The web reads arrays/true-false too, but always writes the shared format
+  (`serializeMetadataForStorage` in `prepareListingDetails`).
+- Mobile validates `required` and `validation_rules.required` on every field,
+  hidden conditional ones included. Conditional fields that are required when
+  shown must use `validation_rules.requiredWhenVisible` (web-only).
+- Mobile shows a conditional field only when the parent value equals
+  `parent_value` exactly: use one value, never a comma list. The web's any-of
+  matching exists only for web-defined schemas.
+- Mobile checks `listings.condition` against the category's `condition` field
+  options; the web checks `category_conditions`. Keep both lists aligned.
 
 ## Orders
 

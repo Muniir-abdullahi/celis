@@ -6,12 +6,13 @@
 --      is "yes", as a whole number from 1 to 120.
 --   3. backfill existing listings so their saved warranty still displays.
 --
--- "Required when visible" is stored in validation_rules.required, NOT in the
--- `required` column: the mobile listing RPC (validate_listing_fields) enforces
--- the column unconditionally and does not understand parent_field_id, so
--- setting the column would block mobile listings without a warranty. The web
--- app treats validation_rules.required as required only while the field is
--- visible. min/max/integer live in validation_rules (enforced by both).
+-- "Required when visible" is stored in validation_rules.requiredWhenVisible —
+-- NOT the `required` column and NOT validation_rules.required. The mobile app
+-- validates both of those on every field, hidden conditional ones included,
+-- so either would block mobile sellers who answer "No". Only the web reads
+-- requiredWhenVisible. min/max/integer are only checked when a value exists,
+-- so they are safe for both apps. (An earlier draft used
+-- validation_rules.required; 0035 repairs databases that applied it.)
 --
 -- Non-destructive: no listing values are removed. Not tracked in
 -- drizzle/meta/_journal.json; apply by hand like 0032/0033.
@@ -55,7 +56,7 @@ SET
   "min_value" = 1,
   "max_value" = 120,
   "validation_rules" = COALESCE(m."validation_rules", '{}'::jsonb)
-    || '{"required": true, "integer": true, "min": 1, "max": 120}'::jsonb,
+    || '{"requiredWhenVisible": true, "integer": true, "min": 1, "max": 120}'::jsonb,
   "updated_at" = now()
 FROM "category_fields" AS p
 WHERE m."field_key" = 'warranty_months'

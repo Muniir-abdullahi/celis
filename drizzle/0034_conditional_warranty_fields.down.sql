@@ -15,7 +15,7 @@ SET
   "min_value" = NULL,
   "max_value" = NULL,
   "validation_rules" = COALESCE("validation_rules", '{}'::jsonb)
-    - 'required' - 'integer' - 'min' - 'max',
+    - 'required' - 'requiredWhenVisible' - 'integer' - 'min' - 'max',
   "updated_at" = now()
 WHERE "field_key" = 'warranty_months';
 --> statement-breakpoint

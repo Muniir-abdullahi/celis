@@ -1,5 +1,21 @@
 # Changelog
 
+## [v4.2.2] - 2026-11-15
+
+### Fixed (mobile app compatibility)
+
+- Migration 0034 stored "required when visible" as
+  `validation_rules.required`, which the mobile app enforces on hidden fields:
+  mobile sellers answering "No" to warranty could not post. It now uses the
+  web-only `requiredWhenVisible`; new migration `0035` repairs databases that
+  applied the earlier 0034.
+- Battery Health is no longer conditional in the seed; mobile only supports
+  single exact-match conditions. The seed now rejects comma-list conditions.
+- The web stores multi-select as comma-joined strings and booleans as
+  "yes"/"no" (mobile's format) and reads both formats, so mobile-created
+  listings can be edited on the web and show labels instead of codes. Search
+  filters match both formats. 0035 converts older web-format metadata.
+
 ## [v4.2.1] - 2026-11-15
 
 ### Security

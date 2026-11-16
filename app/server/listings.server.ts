@@ -413,6 +413,23 @@ export async function requireSeller(sellerId: string) {
   return user[0];
 }
 
+function metadataFilterCondition(key: string, value: string) {
+  const lowered = value.trim().toLowerCase();
+  const booleanAliases =
+    lowered === "yes" || lowered === "true"
+      ? ["yes", "true"]
+      : lowered === "no" || lowered === "false"
+      ? ["no", "false"]
+      : null;
+  const text = sql`(${listings.metadata} ->> ${key})`;
+  if (booleanAliases) {
+    return sql`${text} IN (${sql.join(booleanAliases.map((v) => sql`${v}`), sql`, `)})`;
+  }
+  return sql`(${text} = ${value}
+    OR ${value} = ANY(string_to_array(${text}, ','))
+    OR (${listings.metadata} -> ${key}) @> to_jsonb(${value}::text))`;
+}
+
 export interface SearchListingsFilters {
   query?: string;
   categoryId?: string;
@@ -457,9 +474,10 @@ export async function searchListings(filters: SearchListingsFilters) {
     for (const [key, value] of Object.entries(metadataFilters)) {
       if (value === "" || value === undefined) continue;
       conditions.push(
-        // Scalar values match on text; multi-select values are stored as
-        // JSON arrays, so also match when the array contains the value.
-        sql`((${listings.metadata} ->> ${key}) = ${value} OR (${listings.metadata} -> ${key}) @> to_jsonb(${value}::text))`
+        // Shared formats: scalars match on text; multi-select is a
+        // comma-joined string (older web rows may hold a JSON array); booleans
+        // are "yes"/"no" (older web rows may hold true/false).
+        metadataFilterCondition(key, value)
       );
     }
   }

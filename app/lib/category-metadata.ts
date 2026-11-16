@@ -162,6 +162,51 @@ export function isEmptyMetadataValue(value: unknown) {
 }
 
 /**
+ * Storage formats shared with the mobile app (same Supabase rows, read and
+ * written by the `save_listing_with_fields` RPC):
+ * - multi-select → comma-joined string, e.g. "black,white"
+ * - boolean      → "yes" / "no"
+ * The web keeps arrays / booleans in form state and accepts both formats when
+ * reading, then writes these formats via `serializeMetadataForStorage`.
+ */
+export function toBooleanValue(value: unknown): boolean | null {
+  if (value === true || value === false) return value;
+  const text = String(value ?? "").trim().toLowerCase();
+  if (["yes", "true", "1"].includes(text)) return true;
+  if (["no", "false", "0"].includes(text)) return false;
+  return null;
+}
+
+export function toMultiValues(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+  const parts = Array.isArray(value) ? value.map(String) : String(value).split(",");
+  return Array.from(new Set(parts.map((v) => v.trim()).filter((v) => v !== "")));
+}
+
+/** Convert form/server values into the shared (mobile-compatible) format. */
+export function serializeMetadataForStorage<T>(
+  schema: CategoryMetadataSchema | undefined | null,
+  metadata: Record<string, T>
+): Record<string, T | string> {
+  if (!schema) return metadata;
+  const types = new Map(schema.fields.map((f) => [f.key, f.type]));
+  const out: Record<string, T | string> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    const type = types.get(key);
+    if (type === "multi-select") {
+      const values = toMultiValues(value);
+      if (values.length > 0) out[key] = values.join(",");
+    } else if (type === "boolean") {
+      const bool = toBooleanValue(value);
+      if (bool !== null) out[key] = bool ? "yes" : "no";
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+/**
  * `expected` may list several accepted values separated by commas
  * (`parent_value = "used,used_good,refurbished"`); any one of them matches.
  */
@@ -209,9 +254,14 @@ export function getVisibleFields(
         visible = false;
       } else {
         trail.add(field.key);
+        const parentValue =
+          parent.type === "multi-select"
+            ? toMultiValues(metadata[parent.key])
+            : parent.type === "boolean"
+            ? toBooleanValue(metadata[parent.key])
+            : metadata[parent.key];
         visible =
-          isVisible(parent, trail) &&
-          valueMatches(metadata[parent.key], field.showWhen.value);
+          isVisible(parent, trail) && valueMatches(parentValue, field.showWhen.value);
         trail.delete(field.key);
       }
     }
@@ -279,8 +329,8 @@ export function validateMetadata(
         errors[field.key] = `${field.label} is invalid`;
       }
     } else if (field.type === "multi-select") {
-      const values = Array.isArray(value) ? value : [value];
-      if (allowed && values.some((v) => !allowed.includes(String(v)))) {
+      const values = toMultiValues(value);
+      if (allowed && values.some((v) => !allowed.includes(v))) {
         errors[field.key] = `${field.label} is invalid`;
       }
     }
@@ -297,8 +347,7 @@ export function normalizeMetadataValue(
   value: unknown
 ): MetadataValue {
   if (type === "boolean") {
-    if (value === null || value === undefined || value === "") return null;
-    return value === true || value === "true";
+    return toBooleanValue(value);
   }
   if (type === "number") {
     if (value === null || value === undefined || value === "") return null;
@@ -306,11 +355,9 @@ export function normalizeMetadataValue(
     return Number.isNaN(n) ? null : n;
   }
   if (type === "multi-select") {
-    if (value === null || value === undefined || value === "") return null;
-    const values = (Array.isArray(value) ? value : [value])
-      .map((v) => String(v))
-      .filter((v) => v !== "");
-    return values.length > 0 ? Array.from(new Set(values)) : null;
+    // Accepts arrays and mobile's comma-joined strings.
+    const values = toMultiValues(value);
+    return values.length > 0 ? values : null;
   }
   if (value === undefined || value === null) return null;
   const text = String(value);
@@ -336,10 +383,13 @@ export function metadataOptionLabel(field: MetadataField, value: string): string
 export function formatMetadataValue(field: MetadataField, value: unknown): string {
   if (isEmptyMetadataValue(value)) return "—";
   if (field.type === "boolean") {
-    return value === true || value === "true" ? "Yes" : "No";
+    const bool = toBooleanValue(value);
+    return bool === null ? String(value) : bool ? "Yes" : "No";
   }
-  if (Array.isArray(value)) {
-    return value.map((v) => metadataOptionLabel(field, String(v))).join(", ");
+  if (field.type === "multi-select" || Array.isArray(value)) {
+    return toMultiValues(value)
+      .map((v) => metadataOptionLabel(field, v))
+      .join(", ");
   }
   if (isSelectType(field.type)) {
     return metadataOptionLabel(field, String(value));

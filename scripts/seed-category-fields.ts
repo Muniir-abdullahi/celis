@@ -36,15 +36,18 @@ type FieldDef = {
   options?: Array<{ value: string; label: string; group?: string }>;
   /**
    * Conditional display: shown only while field `parentKey` (same category)
-   * equals `parentValue`. Use `rules.required` (not `required`) for
-   * "required when visible" — the mobile RPC enforces the `required` column
-   * unconditionally.
+   * equals `parentValue`. Mobile compatibility (see docs/domain/marketplace.md):
+   * - `parentValue` must be ONE exact value — the mobile app does not support
+   *   comma-separated "any of" lists.
+   * - For "required when visible" use `rules.requiredWhenVisible`, never
+   *   `required` or `rules.required`: mobile validates those on every field,
+   *   including hidden ones.
    */
   parentKey?: string;
   parentValue?: string;
   minValue?: number;
   maxValue?: number;
-  rules?: { required?: boolean; integer?: boolean; min?: number; max?: number };
+  rules?: { requiredWhenVisible?: boolean; integer?: boolean; min?: number; max?: number };
 };
 
 /** Condition & Warranty: duration is asked only when a warranty exists. */
@@ -59,11 +62,8 @@ const WARRANTY_FIELDS: FieldDef[] = [
     helpText: "Whole number of months, for example 12.",
     parentKey: "warranty_available", parentValue: "yes",
     minValue: 1, maxValue: 120,
-    rules: { required: true, integer: true, min: 1, max: 120 } },
+    rules: { requiredWhenVisible: true, integer: true, min: 1, max: 120 } },
 ];
-
-/** Condition codes treated as pre-owned (listing + legacy metadata codes). */
-const USED_CONDITION_CODES = "used,used_excellent,used_good,used_fair,refurbished";
 
 const REGION_FIELD: FieldDef = {
   key: "region", label: "Region", type: "single-select", required: true, isFilter: true, searchable: true,
@@ -208,10 +208,9 @@ const PHONES_FIELDS: FieldDef[] = [
       { value: "silver", label: "Silver", group: "OTHER" },
       { value: "green", label: "Green", group: "OTHER" },
     ] },
+  // Optional for every condition: gating it on "used" would need several
+  // condition codes, which the mobile app's exact-match conditions can't do.
   { key: "battery_health", label: "Battery Health", type: "single-select",
-    // Asked only for pre-owned devices. Matches both the listing condition
-    // codes (category_conditions) and the legacy metadata condition codes.
-    parentKey: "condition", parentValue: USED_CONDITION_CODES,
     options: [
       { value: "100", label: "100%" },
       { value: "90_99", label: "90% - 99%" },
@@ -426,6 +425,9 @@ async function main() {
     for (const def of fields) {
       const id = idsByKey.get(def.key)!;
       const parentId = def.parentKey ? idsByKey.get(def.parentKey) : undefined;
+      if (def.parentValue?.includes(",")) {
+        throw new Error(`Field "${def.key}": parentValue must be a single value (mobile app limitation).`);
+      }
       if (def.parentKey && !parentId) {
         throw new Error(`Field "${def.key}" depends on unknown field "${def.parentKey}" in "${slug}".`);
       }

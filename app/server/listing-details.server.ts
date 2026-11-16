@@ -1,7 +1,9 @@
 import { getCategoryConditions, getCategoryMetadataSchema } from "./categories.server";
 import {
   compactMetadata,
+  normalizeMetadataValue,
   RESERVED_METADATA_KEYS,
+  serializeMetadataForStorage,
   stripHiddenMetadata,
   validateMetadata,
 } from "~/lib/category-metadata";
@@ -38,24 +40,27 @@ export async function prepareListingDetails(listing: ListingInput): Promise<void
   }
   const context = { condition: listing.condition ?? null };
 
-  const allowedKeys = metadataSchema
-    ? new Set(metadataSchema.fields.map((f) => f.key))
-    : null;
-  listing.metadata = compactMetadata(
-    stripHiddenMetadata(
-      metadataSchema,
-      Object.fromEntries(
-        Object.entries(listing.metadata).filter(
-          ([key]) =>
-            !RESERVED_METADATA_KEYS.has(key) && (!allowedKeys || allowedKeys.has(key))
-        )
-      ),
-      context
-    )
+  const typeByKey = new Map(metadataSchema?.fields.map((f) => [f.key, f.type]) ?? []);
+  // Accept both web (arrays / booleans) and mobile (comma strings / "yes"/"no")
+  // shapes, normalized per field type before validation.
+  const normalized = Object.fromEntries(
+    Object.entries(listing.metadata)
+      .filter(
+        ([key]) =>
+          !RESERVED_METADATA_KEYS.has(key) && (!metadataSchema || typeByKey.has(key))
+      )
+      .map(([key, value]) => {
+        const type = typeByKey.get(key);
+        return [key, type ? normalizeMetadataValue(type, value) : value];
+      })
   );
+  const metadata = compactMetadata(stripHiddenMetadata(metadataSchema, normalized, context));
 
-  const metadataErrors = validateMetadata(metadataSchema, listing.metadata, context);
+  const metadataErrors = validateMetadata(metadataSchema, metadata, context);
   if (Object.keys(metadataErrors).length > 0) {
     throw new Error(Object.values(metadataErrors).join("; "));
   }
+
+  // Store in the format the mobile app and its RPC read and write.
+  listing.metadata = serializeMetadataForStorage(metadataSchema, metadata);
 }

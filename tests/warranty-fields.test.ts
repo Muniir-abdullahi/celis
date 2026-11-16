@@ -59,7 +59,9 @@ test("warranty fields render in the Condition & Warranty group", () => {
 test("migration gates duration on warranty_available = yes with whole-number bounds", () => {
   assert.match(migration, /'warranty_available',\s*'Warranty available\?',\s*'single-select'/);
   assert.match(migration, /"parent_value" = 'yes'/);
-  assert.match(migration, /\{"required": true, "integer": true, "min": 1, "max": 120\}/);
+  assert.match(migration, /\{"requiredWhenVisible": true, "integer": true, "min": 1, "max": 120\}/);
+  // Mobile validates validation_rules.required on hidden fields too.
+  assert.doesNotMatch(migration, /\{"required": true/);
 });
 
 test("migration never sets the required column (mobile RPC enforces it unconditionally)", () => {
@@ -78,6 +80,6 @@ test("listing backfill is guarded and keeps existing values", () => {
 
 test("seed mirrors the migration for fresh databases", () => {
   assert.match(seed, /parentKey: "warranty_available", parentValue: "yes"/);
-  assert.match(seed, /rules: \{ required: true, integer: true, min: 1, max: 120 \}/);
+  assert.match(seed, /rules: \{ requiredWhenVisible: true, integer: true, min: 1, max: 120 \}/);
   assert.doesNotMatch(seed, /key: "warranty_months", label: "Warranty \(months\)"/);
 });
