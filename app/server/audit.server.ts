@@ -1,7 +1,7 @@
 import { db } from "~/db";
 import { auditLogs } from "~/db/schema";
 import { getCurrentUser } from "./auth.server";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { and, eq, desc, count, sql } from "drizzle-orm";
 
 export type AuditMetadata = Record<string, string | number | boolean | null> | null;
 
@@ -47,10 +47,21 @@ export async function insertAuditLog(event: AuditEvent) {
 export async function getAdminAuditLogs(options?: {
   page?: number;
   limit?: number;
+  /** Narrow to one resource, e.g. a listing's activity log. */
+  resourceType?: string;
+  resourceId?: string;
 }) {
   const page = options?.page ?? 1;
   const limit = options?.limit ?? 25;
   const offset = (page - 1) * limit;
+  // Uses idx_audit_logs_resource (resource_type, resource_id).
+  const where =
+    options?.resourceType && options?.resourceId
+      ? and(
+          eq(auditLogs.resourceType, options.resourceType),
+          eq(auditLogs.resourceId, options.resourceId)
+        )
+      : undefined;
 
   const rows = await db
     .select({
@@ -59,13 +70,15 @@ export async function getAdminAuditLogs(options?: {
     })
     .from(auditLogs)
     .leftJoin(sql`users`, eq(sql`users.id`, auditLogs.actorId))
+    .where(where)
     .orderBy(desc(auditLogs.createdAt))
     .limit(limit)
     .offset(offset);
 
   const [{ value: total }] = await db
     .select({ value: count() })
-    .from(auditLogs);
+    .from(auditLogs)
+    .where(where);
 
   return {
     items: rows.map((r) => ({

@@ -246,6 +246,18 @@ Rules:
 
 ## Moderation, RBAC & Audit
 
+- **Listing activity log:** `/admin/listings/[id]` shows that listing's
+  `audit_logs` (resource `listing`), paginated 10 per page via `?activity=`,
+  for staff with `audit:read` (`fetchListingAuditLogs`). Listing events:
+  `listing_created`, `listing_submitted_with_package`, `listing_fee_paid` /
+  `listing_fee_payment_failed` (and feature-fee equivalents, written in the
+  payment transaction, no phone numbers), `listing.seller_edit`,
+  `listing_approved`, `listing_rejected`, `listing_status_changed`,
+  `listing_renewed`, `listing_expiry_extended`,
+  `listing_payment_marked_paid_manually`. Events before 18 Nov 2026 for
+  creation/payment were not recorded.
+
+
 Key files:
 
 - `app/db/schema/listing-reviews.ts`

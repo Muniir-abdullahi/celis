@@ -577,6 +577,24 @@ export async function fetchAdminAuditLogs(input: { data: unknown }) {
     return getAdminAuditLogs(data);
 }
 
+const listingAuditLogQuerySchema = z.object({
+  listingId: z.string().uuid(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+});
+
+/** One listing's activity: moderation, status, payment and seller edits. */
+export async function fetchListingAuditLogs(input: { data: unknown }) {
+  const data = listingAuditLogQuerySchema.parse(input.data);
+  await requirePermission("audit:read");
+  return getAdminAuditLogs({
+    resourceType: "listing",
+    resourceId: data.listingId,
+    page: data.page,
+    limit: data.limit,
+  });
+}
+
 export async function fetchPlatformConfigAll() {
 
     return getPlatformConfigAll();

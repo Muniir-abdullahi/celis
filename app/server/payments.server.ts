@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
-import { listings, walletPayments } from "~/db/schema";
+import { auditLogs, listings, walletPayments } from "~/db/schema";
 import type { WalletProvider } from "~/db/schema";
 import { CelisError } from "~/lib/errors";
 import { getWaafiUserMessage, normalizeWaafiAccountNo } from "~/lib/waafi";
@@ -156,6 +156,28 @@ export async function initiateWalletPayment(
           monetizationStatus: "active",
           updatedAt: new Date(),
         }).where(eq(listings.id, listingId));
+      }
+
+      // Listing activity log: every listing-fee / feature-fee attempt outcome.
+      // No phone number is stored.
+      if (listingId && (purpose === "listing_fee" || purpose === "feature_listing")) {
+        await tx.insert(auditLogs).values({
+          actorId: userId,
+          action:
+            status === "completed"
+              ? purpose === "listing_fee" ? "listing_fee_paid" : "listing_feature_paid"
+              : purpose === "listing_fee" ? "listing_fee_payment_failed" : "listing_feature_payment_failed",
+          resourceType: "listing",
+          resourceId: listingId,
+          metadata: {
+            merchantRef,
+            amountCents,
+            provider,
+            paymentStatus: status,
+            providerResponseCode: response.responseCode,
+            message: message ?? null,
+          },
+        });
       }
     });
 

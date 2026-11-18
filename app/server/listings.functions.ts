@@ -45,6 +45,13 @@ export async function submitShopListing(input: { data: unknown }) {
   const data = (submitShopSchema).parse(input.data);
   const user = await requireCurrentUser();
   await submitShopListingForReview(data.listingId, user.id);
+  const { insertAuditLog } = await import("./audit.server");
+  await insertAuditLog({
+    action: "listing_submitted_with_package",
+    resourceType: "listing",
+    resourceId: data.listingId,
+    metadata: { reason: "listing fee covered by package" },
+  });
   return { success: true, id: data.listingId };
 }
 
@@ -99,6 +106,18 @@ export async function createListing(input: { data: unknown }) {
 
     const { updateListingFees } = await import("./listings.server");
     await updateListingFees(listing.id, pricing);
+
+    const { insertAuditLog } = await import("./audit.server");
+    await insertAuditLog({
+      action: "listing_created",
+      resourceType: "listing",
+      resourceId: listing.id,
+      metadata: {
+        priceCents: data.listing.price,
+        feeCents: pricing.feeCents,
+        coveredByPackage: pricing.coveredByPackage,
+      },
+    });
 
     return {
       id: listing.id,

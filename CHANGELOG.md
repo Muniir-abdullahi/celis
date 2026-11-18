@@ -1,5 +1,16 @@
 # Changelog
 
+## [v4.3.0] - 2026-11-18
+
+### Added
+
+- Activity log on the admin listing detail page: that listing's audit events,
+  paginated, for staff with `audit:read`.
+- New listing audit events: `listing_created`,
+  `listing_submitted_with_package`, `listing_fee_paid`,
+  `listing_fee_payment_failed` (and feature-fee equivalents).
+- `getAdminAuditLogs` accepts a resource filter.
+
 ## [v4.2.4] - 2026-11-18
 
 ### Fixed

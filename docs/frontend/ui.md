@@ -68,6 +68,10 @@ Rules:
 
 ## Admin UI
 
+- Admin listing detail (`app/admin/listings/[id]`) includes an "Activity log"
+  card (`listing-activity.tsx`) reusing `AdminTable` and `Pagination`.
+
+
 Key files:
 
 - `app/admin/**`
