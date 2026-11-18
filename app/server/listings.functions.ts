@@ -84,8 +84,10 @@ export async function createListing(input: { data: unknown }) {
 
     // Pricing (and the listing type) come from admin configuration, never
     // from the seller.
-    const { getListingPricing } = await import("./config.server");
-    const pricing = await getListingPricing(
+    // Package sellers pay no listing fee; others get the strict tier fee.
+    const { getSellerListingPricing } = await import("./seller-pricing.server");
+    const pricing = await getSellerListingPricing(
+      user.id,
       data.listing.price,
       data.listing.categoryId
     );

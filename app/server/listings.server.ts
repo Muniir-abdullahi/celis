@@ -242,10 +242,12 @@ export async function submitShopListingForReview(
       400
     );
   }
+  // Any seller (shop or individual) with an active package that still has
+  // credits submits without paying a listing fee.
   const eligibility = await getSellerListingEligibility(sellerId);
-  if (eligibility.sellerType !== "shop" || !eligibility.canList) {
+  if (!eligibility.subscription || !eligibility.canList) {
     throw new CelisError(
-      "No active listing package for this shop",
+      "No active listing package with remaining credits",
       "SHOP_PACKAGE_REQUIRED",
       402
     );

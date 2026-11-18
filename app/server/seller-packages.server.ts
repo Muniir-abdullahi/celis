@@ -112,10 +112,16 @@ export async function countSubscriptionListings(
 }
 
 export async function getSellerListingEligibility(sellerId: string) {
-  const seller = await getSellerProfile(sellerId);
+  const [seller, sub] = await Promise.all([
+    getSellerProfile(sellerId),
+    getActiveSellerSubscription(sellerId),
+  ]);
   const sellerType = seller?.profile?.sellerType ?? "individual";
 
-  if (sellerType === "individual") {
+  // An active package covers listing fees for ANY seller type (packages can be
+  // made for individual sellers and assigned to them by admins). Only sellers
+  // without a package fall back to their type's default.
+  if (!sub && sellerType === "individual") {
     return {
       sellerType,
       canList: true,
@@ -126,7 +132,6 @@ export async function getSellerListingEligibility(sellerId: string) {
     };
   }
 
-  const sub = await getActiveSellerSubscription(sellerId);
   if (!sub) {
     return {
       sellerType,

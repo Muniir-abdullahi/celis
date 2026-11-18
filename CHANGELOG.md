@@ -1,5 +1,16 @@
 # Changelog
 
+## [v4.2.4] - 2026-11-18
+
+### Fixed
+
+- Sellers with an active package were still shown (and could be charged) a
+  listing fee. Individual sellers' packages were ignored entirely, and the
+  wizard showed fee tiers and the fee to every seller. An active package now
+  covers the fee for any seller type: listings are stored with a $0 fee, the
+  wizard shows "covered by your package" with remaining credits, and web and
+  mobile listing-fee payments refuse covered listings.
+
 ## [v4.2.3] - 2026-11-16
 
 ### Fixed (IT report 16 Nov 2026)

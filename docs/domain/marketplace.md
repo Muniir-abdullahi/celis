@@ -222,6 +222,14 @@ Rules:
 - Package create/update/status/archive/delete actions require confirmation.
 - Keep pricing and package display consistent across seller and admin surfaces.
 - Document plan/package behavior changes.
+- **An active subscription covers listing fees for any seller type** (shop or
+  individual). `getSellerListingEligibility` checks the subscription first;
+  only sellers without one fall back to their type (individual: pay per
+  listing; shop: cannot list). `getSellerListingPricing`
+  (`app/server/seller-pricing.server.ts`) stores package listings with a $0
+  listing fee (any valid price allowed), and web/mobile listing-fee payments
+  refuse covered listings (`LISTING_COVERED_BY_PACKAGE`, 409). The wizard
+  shows "covered by your package" with remaining credits instead of fees.
 - `listing_packages.is_active` is the enable flag and the archive flag.
   Inactive packages are excluded from `listListingPackages` (seller purchase)
   and rejected by `assignSellerPackage` (admin assignment).

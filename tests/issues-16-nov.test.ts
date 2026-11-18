@@ -62,21 +62,26 @@ test("server charging paths refuse unpriced prices; previews stay neutral", () =
   assert.match(config, /if \(!pricing\.priced\) \{[\s\S]*?"PRICE_OUTSIDE_TIERS"/);
   assert.match(preview, /return computeListingPricing\(data\.price, data\.categoryId\)/);
   assert.match(approval, /computeListingPricing\(listing\.price, listing\.categoryId\)/);
-  // Create, edit and both payment entry points use the strict version.
+  // Create, edit and both payment entry points go through the seller pricing
+  // helper, which uses the strict version for fee-paying sellers.
   for (const file of [
     "app/server/listings.functions.ts",
     "app/server/listing-edit.server.ts",
     "app/server/payments.functions.ts",
     "app/api/mobile/payments/listing-fee/route.ts",
   ]) {
-    assert.match(readFileSync(file, "utf8"), /getListingPricing\(/, file);
+    assert.match(readFileSync(file, "utf8"), /getSellerListingPricing\(/, file);
   }
+  assert.match(
+    readFileSync("app/server/seller-pricing.server.ts", "utf8"),
+    /const pricing = await getListingPricing\(priceCents, categoryId\)/
+  );
 });
 
 test("wizard shows a neutral summary and blocks Next until the price has a tier", () => {
   const wizard = readFileSync("app/components/listings/listing-wizard.tsx", "utf8");
   assert.match(wizard, /Enter a price to calculate the listing fee\./);
-  assert.match(wizard, /findListingTier\(form\.price, tiersConfig\) !== null && form\.deliveryMethod/);
+  assert.match(wizard, /: findListingTier\(form\.price, tiersConfig\) !== null;\s*return priceOk && form\.deliveryMethod/);
   assert.match(wizard, /if \(!cancelled\) setPreview\(next\)/);
   assert.doesNotMatch(readFileSync("app/lib/pricing.ts", "utf8"), /\?\? config\.tiers\[config\.tiers\.length - 1\]/);
 });

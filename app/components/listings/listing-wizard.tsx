@@ -186,6 +186,12 @@ export function ListingWizard({
     requiresPayment: boolean;
     remainingListings: number | null;
   } | null>(null);
+  // An active package (shop or individual) covers the listing fee.
+  const coveredByPackage = eligibility?.requiresPayment === false;
+  const packageCreditsLabel =
+    eligibility?.remainingListings === null || eligibility?.remainingListings === undefined
+      ? "Unlimited listings"
+      : `${eligibility.remainingListings} listing${eligibility.remainingListings === 1 ? "" : "s"} left`;
   const [categoryConditions, setCategoryConditions] = useState<
     CategoryConditionItem[]
   >([]);
@@ -338,17 +344,22 @@ export function ListingWizard({
       return form.title.length >= 5 && form.description.length >= 20 && form.categoryId;
     }
     if (step === 1) {
-      // A price must fall in a fee tier before the seller can continue.
-      return findListingTier(form.price, tiersConfig) !== null && form.deliveryMethod;
+      // Fee-paying sellers need a price inside a fee tier; package sellers
+      // pay no fee, so any valid price (schema minimum $1) is fine.
+      const priceOk = coveredByPackage
+        ? form.price >= 100
+        : findListingTier(form.price, tiersConfig) !== null;
+      return priceOk && form.deliveryMethod;
     }
     if (step === 2) {
       return form.images.length > 0;
     }
     return true;
-  }, [step, form, tiersConfig]);
+  }, [step, form, tiersConfig, coveredByPackage]);
 
   const minimumPriceCents = useMemo(() => minimumTierPriceCents(tiersConfig), [tiersConfig]);
-  const priceBelowMinimum = form.price > 0 && findListingTier(form.price, tiersConfig) === null;
+  const priceBelowMinimum =
+    !coveredByPackage && form.price > 0 && findListingTier(form.price, tiersConfig) === null;
 
   const [preview, setPreview] = useState<ListingPricing>(() =>
     calculateListingPricing(form.price, tiersConfig, {
@@ -728,7 +739,17 @@ export function ListingWizard({
 
               {/* Fixed fee tiers only apply when the platform charges listing
                   fees (fixed_only / hybrid); commission-only shows no tiers. */}
-              {monetizationModel !== "commission_only" && (
+              {coveredByPackage && (
+                <div
+                  role="status"
+                  className="rounded-lg border border-celis-success/40 bg-celis-success-subtle p-4 text-sm text-celis-ink"
+                >
+                  <p className="font-medium">No listing fee: this listing is covered by your package.</p>
+                  <p className="text-celis-ink-secondary">{packageCreditsLabel}.</p>
+                </div>
+              )}
+
+              {!coveredByPackage && monetizationModel !== "commission_only" && (
               <div className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary">
                 <p className="mb-2 font-medium text-celis-ink">Listing fee tiers</p>
                 <ul className="space-y-1">
@@ -758,7 +779,7 @@ export function ListingWizard({
               </div>
               )}
 
-              {!preview.priced ? (
+              {coveredByPackage ? null : !preview.priced ? (
               <div
                 role="status"
                 className="rounded-lg border border-celis-border bg-celis-surface-inset p-4 text-sm text-celis-ink-secondary"
@@ -866,7 +887,11 @@ export function ListingWizard({
                 <div className="flex justify-between py-2">
                   <dt className="text-celis-ink-secondary">Listing fee</dt>
                   <dd className="font-medium">
-                    {preview.feeCents > 0 ? formatPrice(preview.feeCents) : "—"}
+                    {coveredByPackage
+                      ? "Covered by package"
+                      : preview.feeCents > 0
+                      ? formatPrice(preview.feeCents)
+                      : "—"}
                   </dd>
                 </div>
                 {preview.commissionAmountCents !== null && preview.commissionAmountCents > 0 && (
@@ -933,7 +958,7 @@ export function ListingWizard({
                 ? "Save changes"
                 : eligibility?.requiresPayment
                 ? `Publish & pay ${formatPrice(serverFeeCents || preview.totalFeeCents)}`
-                : eligibility?.sellerType === "shop"
+                : coveredByPackage
                 ? `Publish (package: ${
                     eligibility?.remainingListings === null
                       ? "Unlimited"

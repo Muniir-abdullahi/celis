@@ -14,7 +14,7 @@ import type { ListingInput } from "~/lib/validation";
 import type { EditableListing } from "~/lib/listing-edit";
 
 export type { EditableListing };
-import { getListingPricing } from "./config.server";
+import { getSellerListingPricing } from "./seller-pricing.server";
 import { getSellerListingEligibility } from "./seller-packages.server";
 
 function assertEditable(
@@ -88,10 +88,13 @@ export async function updateSellerListing(
   sellerId: string,
   input: ListingInput
 ) {
-  const [pricing, eligibility] = await Promise.all([
-    getListingPricing(input.price, input.categoryId),
-    getSellerListingEligibility(sellerId),
-  ]);
+  const eligibility = await getSellerListingEligibility(sellerId);
+  const pricing = await getSellerListingPricing(
+    sellerId,
+    input.price,
+    input.categoryId,
+    eligibility
+  );
 
   return db.transaction(async (tx) => {
     const [current] = await tx

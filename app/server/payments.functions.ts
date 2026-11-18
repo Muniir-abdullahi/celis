@@ -7,10 +7,10 @@ import {
 } from "./payments.server";
 import {
   getListingFeeCents,
-  getListingPricing,
   getFeaturedListingFeeCents,
 } from "./config.server";
 import { featureListing } from "./listings.server";
+import { assertListingFeePayable, getSellerListingPricing } from "./seller-pricing.server";
 import { monetizationTypeForModel } from "~/lib/pricing";
 import { db } from "~/db";
 import { listings } from "~/db/schema";
@@ -78,7 +78,13 @@ export async function initiatePayment(input: { data: unknown }) {
         if (data.featureListing) {
           amountCents = await getFeaturedListingFeeCents();
         } else {
-          const pricing = await getListingPricing(listing.price, listing.categoryId);
+          const pricing = await getSellerListingPricing(
+            user.id,
+            listing.price,
+            listing.categoryId
+          );
+          // Never charge a listing fee the seller's package already covers.
+          assertListingFeePayable(pricing);
           amountCents = pricing.feeCents;
 
           // Snapshot the pricing inputs/outputs on the listing so the fee

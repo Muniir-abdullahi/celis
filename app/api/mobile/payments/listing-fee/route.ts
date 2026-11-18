@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { listings } from "~/db/schema";
 import { getServiceSupabase } from "~/lib/supabase/server";
-import { getListingPricing } from "~/server/config.server";
+import {
+  assertListingFeePayable,
+  getSellerListingPricing,
+} from "~/server/seller-pricing.server";
 import { isCelisError } from "~/lib/errors";
 import { initiateWalletPayment } from "~/server/payments.server";
 
@@ -65,7 +68,13 @@ export async function POST(request: Request) {
     if (listing.sellerId !== authData.user.id) {
       return json({ message: "Forbidden." }, 403);
     }
-    const pricing = await getListingPricing(listing.price, listing.categoryId);
+    const pricing = await getSellerListingPricing(
+      authData.user.id,
+      listing.price,
+      listing.categoryId
+    );
+    // A package covers the fee: refuse instead of charging (409).
+    assertListingFeePayable(pricing);
     console.info("[mobile-listing-payment] starting gateway payment", {
       requestId,
       listingId: listing.id,
