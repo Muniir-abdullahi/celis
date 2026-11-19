@@ -658,6 +658,34 @@ export async function fetchAdminListingPackages() {
     return listAllListingPackages();
 }
 
+const packageDetailSchema = z.object({
+  packageId: z.string().uuid(),
+  filter: z.enum(["active", "expired", "cancelled", "all"]).optional().default("active"),
+  search: z.string().trim().max(120).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
+/** Package detail for admins: summary counts + the sellers assigned to it. */
+export async function fetchAdminPackageDetail(input: { data: unknown }) {
+  const data = packageDetailSchema.parse(input.data);
+  await requirePermission("settings:manage");
+  const { getAdminPackageSummary, getPackageSubscribers } = await import(
+    "./package-subscribers.server"
+  );
+  const [summary, subscribers] = await Promise.all([
+    getAdminPackageSummary(data.packageId),
+    getPackageSubscribers({
+      packageId: data.packageId,
+      filter: data.filter,
+      search: data.search || undefined,
+      page: data.page,
+      limit: data.limit,
+    }),
+  ]);
+  return { ...summary, subscribers, filter: data.filter, search: data.search ?? "" };
+}
+
 export async function createAdminListingPackage(input: { data: unknown }) {
   const data = (packageSchema).parse(input.data);
 

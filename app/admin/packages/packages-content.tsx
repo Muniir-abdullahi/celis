@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
@@ -393,7 +394,12 @@ export function PackagesContent({ packages, permissions }: { packages: Awaited<R
                 header: "Package",
                 cell: (p) => (
                   <div>
-                    <p className="font-medium text-celis-ink">{p.name}</p>
+                    <Link
+                      href={`/admin/packages/${p.id}`}
+                      className="font-medium text-celis-ink hover:text-celis-primary"
+                    >
+                      {p.name}
+                    </Link>
                     <p className="text-xs text-celis-ink-secondary">
                       {p.description}
                     </p>
@@ -458,6 +464,9 @@ export function PackagesContent({ packages, permissions }: { packages: Awaited<R
                 header: "",
                 cell: (p) => (
                   <div className="flex flex-wrap justify-end gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/packages/${p.id}`}>View sellers</Link>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

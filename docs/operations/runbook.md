@@ -55,6 +55,8 @@ Rules:
 - Pricing: if listings under $10 must be accepted, set the Basic tier's
   minimum price to $1.00 in Admin → Settings → Pricing (the listing form's
   minimum). Prices in no tier cannot be charged (`PRICE_OUTSIDE_TIERS`).
+- `0037_seller_subscriptions_package_index.sql` (after 0036; additive):
+  index for the admin package detail sellers list.
 - Document new tables in `docs/domain/marketplace.md`.
 - Add indexes for repeated admin filters/search/sorts.
 

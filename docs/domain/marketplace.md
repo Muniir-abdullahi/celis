@@ -214,6 +214,8 @@ Key files:
 - `app/db/schema/seller-packages.ts`
 - `app/server/seller-packages.server.ts`
 - `app/admin/packages/page.tsx`
+- `app/admin/packages/[id]/page.tsx` (package detail + assigned sellers)
+- `app/server/package-subscribers.server.ts`
 - `app/lib/pricing.ts`
 
 Rules:
@@ -230,6 +232,13 @@ Rules:
   listing fee (any valid price allowed), and web/mobile listing-fee payments
   refuse covered listings (`LISTING_COVERED_BY_PACKAGE`, 409). The wizard
   shows "covered by your package" with remaining credits instead of fees.
+- **Package detail** (`/admin/packages/[id]`, `settings:manage`): package
+  settings, counts (active sellers, sellers ever assigned, assignments) and a
+  server-paginated table of assignments with seller, status, listings used,
+  period, who assigned it and price paid. Filters: active (status active and
+  not past `expires_at`), expired (status expired or lapsed active), cancelled,
+  all; search by name, business or email. `seller_subscriptions.package_id`
+  is indexed (`0037`).
 - `listing_packages.is_active` is the enable flag and the archive flag.
   Inactive packages are excluded from `listListingPackages` (seller purchase)
   and rejected by `assignSellerPackage` (admin assignment).

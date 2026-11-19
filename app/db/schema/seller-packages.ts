@@ -7,6 +7,7 @@ import {
   text,
   boolean,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./users";
@@ -69,4 +70,11 @@ export const sellerSubscriptions = pgTable("seller_subscriptions", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  // Admin package detail lists a package's sellers by status / expiry.
+  idxPackageStatus: index("idx_seller_subscriptions_package").on(
+    table.packageId,
+    table.status,
+    table.expiresAt
+  ),
+}));

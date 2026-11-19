@@ -1,5 +1,17 @@
 # Changelog
 
+## [v4.4.0] - 2026-11-19
+
+### Added
+
+- Admin package detail page at `/admin/packages/[id]`: package settings,
+  seller counts, and the sellers assigned to the package (status, listings
+  used, period, assigned by, price paid), with status filters, search and
+  server-side pagination. Package names and a "View sellers" button link to
+  it from `/admin/packages`.
+- Migration `0037` indexes `seller_subscriptions (package_id, status,
+  expires_at)`.
+
 ## [v4.3.0] - 2026-11-18
 
 ### Added
