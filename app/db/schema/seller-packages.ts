@@ -54,6 +54,11 @@ export const sellerSubscriptions = pgTable("seller_subscriptions", {
     .notNull()
     .references(() => listingPackages.id, { onDelete: "cascade" }),
   status: subscriptionStatusEnum("status").notNull().default("active"),
+  listingsUsed: integer("listings_used").notNull().default(0),
+  cancelledBy: uuid("cancelled_by").references(() => users.id, { onDelete: "set null" }),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancellationReason: varchar("cancellation_reason", { length: 40 }),
+  cancellationNotes: varchar("cancellation_notes", { length: 500 }),
   assignmentSource: varchar("assignment_source", { length: 50 }),
   paymentReference: varchar("payment_reference", { length: 255 }),
   pricePaidCents: integer("price_paid_cents"),
@@ -78,3 +83,10 @@ export const sellerSubscriptions = pgTable("seller_subscriptions", {
     table.expiresAt
   ),
 }));
+
+export const sellerPackageUsages = pgTable("seller_package_usages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  subscriptionId: uuid("subscription_id").notNull().references(() => sellerSubscriptions.id),
+  listingId: uuid("listing_id").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();

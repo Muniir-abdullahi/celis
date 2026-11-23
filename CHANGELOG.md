@@ -1,5 +1,15 @@
 # Changelog
 
+## [v6.0.0] - 2026-11-23
+
+### Added
+
+- Migration 0038 introduces assignment cancellation metadata, persisted package
+  usage, versioned listing-fee discount definitions, seller assignment snapshots
+  and RLS-protected checkout reservations, with indexes and historical backfill.
+- Shared discount arithmetic, tier identity and cancellation validation schemas
+  include focused unit coverage.
+
 ## [v5.2.0] - 2026-11-23
 
 ### Added

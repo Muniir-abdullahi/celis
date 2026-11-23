@@ -34,6 +34,16 @@ pnpm cron:expire-listings
 
 ## Migrations & Seeding
 
+Migration `0038_seller_cancellation_and_discounts.sql` must precede deployment
+of seller cancellation/discount code, after the earlier hand-written migrations
+through 0037. It backfills historical allowance usage and adds server-only RLS
+tables. Pause listing writes during the backfill and review the database target
+before running it. It is registered in the Drizzle journal at index 38 with a
+matching snapshot; the index gap preserves the existing manual migration numbers.
+The migration was exercised only in a disposable local PostgreSQL fixture;
+Supabase has not been migrated. Rollout, testing and uncertain-payment handling
+are documented in `../backend/listing-discounts.md`.
+
 Rules:
 
 - Commit Drizzle schema and generated migrations together.
