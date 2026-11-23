@@ -43,6 +43,7 @@ export const listingSchema = z.object({
   images: z.array(listingImageSchema).min(1, "Upload at least one image").max(8),
   metadata: z
     .record(
+      z.string(),
       z.union([
         z.string().max(2000),
         z.number(),

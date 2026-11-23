@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const nextRoot = join(require.resolve("next/package.json"), "..");
 const version = JSON.parse(readFileSync(join(nextRoot, "package.json"), "utf8")).version;
 
-if (version !== "16.3.6") {
+if (version !== "16.4.6") {
   throw new Error(`Review the _global-error build patch for Next.js ${version}`);
 }
 

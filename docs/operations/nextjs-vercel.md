@@ -1,12 +1,36 @@
 # Next.js and Vercel
 
-The root project builds with Next.js 16.3.6 and React 19.3.0. Vercel should use
+The root project builds with Next.js 16.4.6 and React 19.3.0. Vercel should use
 the repository root, install with pnpm, and run `pnpm build`; the Next.js
 integration supplies the app and Route Handler deployment output. There is no
 catch-all Vercel rewrite because it would intercept API requests.
 The Framework Preset must be **Next.js**, with no Output Directory override.
 `vercel.json` pins the framework so an older "Other" preset cannot publish only
 static assets and return a Vercel 404 for application routes.
+
+## Dependency security maintenance
+
+The 2026-11-23 security refresh upgrades Next.js to 16.4.6, Firebase Admin to
+14.5.1, and Zod to 4.6.7. Both `package-lock.json` and `pnpm-lock.yaml` contain
+the patched resolutions. Keep npm `overrides` and `pnpm.overrides` aligned:
+pnpm 9 does not apply the top-level npm overrides. Run both `npm audit` and
+`pnpm audit` when updating the two lockfiles.
+
+Firebase's upstream `node-fetch` / `fetch-blob` chain still includes deprecated
+`node-domexception`; it has no reported audit finding at this verification.
+The deprecated `glob` chain was removed by the Firebase upgrade.
+
+The guarded `_global-error` build patch was reviewed against Next.js 16.4.6;
+its target still uses the same synthetic-route classification. Review the
+patch before each Next.js version update.
+
+Verification on 2026-11-23: both audits report zero vulnerabilities;
+`pnpm typecheck` and eight focused account/metadata validation tests pass.
+The full suite reports 101 passing and three failing checks (two obsolete
+`app/routes/admin` file references and a public-profile SQL assertion).
+Production compilation and build TypeScript checks pass, but page-data
+collection stops because local database/Supabase environment variables are
+absent. Lint cannot start because ESLint is not installed/configured here.
 
 ## Required Environment Variables
 

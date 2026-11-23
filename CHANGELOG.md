@@ -1,5 +1,16 @@
 # Changelog
 
+## [v4.4.1] - 2026-11-23
+
+### Fixed
+
+- Resolve dependency audit findings with Next.js 16.4.6, Firebase Admin 14.5.1,
+  Zod 4.6.7 and patched transitive dependencies. Refresh npm and pnpm lockfiles
+  and apply the existing security overrides to both package managers.
+- Adapt record schemas and parsed admin query defaults to Zod 4, preserving
+  metadata validation and pagination defaults. Add metadata validation tests.
+- Review and retain the guarded Next.js global-error build patch for 16.4.6.
+
 ## [v4.4.0] - 2026-11-19
 
 ### Added

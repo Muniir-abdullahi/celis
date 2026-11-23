@@ -73,7 +73,7 @@ const usersQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchAdminUsers(input: { data: unknown }) {
   const data = (usersQuerySchema).parse(input.data);
@@ -129,7 +129,7 @@ const unverifiedSellersQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchUnverifiedSellers(input: { data: unknown }) {
   const data = (unverifiedSellersQuerySchema).parse(input.data);
@@ -163,7 +163,7 @@ const listingsQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchAdminListings(input: { data: unknown }) {
   const data = (listingsQuerySchema).parse(input.data);
@@ -268,7 +268,7 @@ const categoriesQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchAdminCategories(input: { data: unknown }) {
   const data = (categoriesQuerySchema).parse(input.data);
@@ -391,7 +391,7 @@ const ordersQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchAdminOrders(input: { data: unknown }) {
   const data = (ordersQuerySchema).parse(input.data);
@@ -461,7 +461,7 @@ const payoutsQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({});
+  .prefault({});
 
 export async function fetchAdminPayouts(input: { data: unknown }) {
   const data = (payoutsQuerySchema).parse(input.data);
@@ -494,7 +494,7 @@ const ledgerQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   })
-  .default({ type: "all" as const });
+  .prefault({ type: "all" as const });
 
 export async function fetchAdminLedger(input: { data: unknown }) {
   const data = (ledgerQuerySchema).parse(input.data);
@@ -616,7 +616,7 @@ export async function runAdminExpirySweep() {
 
 const updateConfigSchema = z.object({
   key: z.string(),
-  value: z.union([z.string(), z.number(), z.boolean(), z.record(z.unknown())]),
+  value: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown())]),
   effectiveFrom: z.string().datetime().optional(),
   effectiveUntil: z.string().datetime().optional(),
 });

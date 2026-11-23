@@ -6,7 +6,7 @@ tables, and the design-system pointer.
 ## Next.js Migration Status
 
 - Vercel and local `dev`/`build`/`start` commands use Next.js 16 App Router.
-- The build script applies a guarded patch to Next.js 16.3.6 so its synthetic
+- The build script applies a guarded patch to Next.js 16.4.6 so its synthetic
   `/_global-error` route is not scheduled for static prerendering. This works
   around the framework's null `useContext` crash on Vercel. Remove the patch
   after upgrading to a Next.js release that fixes that route.

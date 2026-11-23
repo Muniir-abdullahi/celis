@@ -20,6 +20,10 @@ Rules:
 - Keep server files focused.
 - Split large server modules into query and mutation modules when needed.
 - Validate every Server Action input with Zod, even when called by our own UI.
+- Zod 4 records declare both key and value schemas. Use `.prefault(...)` for
+  partial object input defaults that must pass through parsing (for example,
+  admin queries whose page/limit defaults must still be populated). `.default(...)`
+  returns an already-valid output directly.
 - Enforce RBAC on the server.
 - Use transactions for multi-record writes.
 - Return only the data the UI needs.
