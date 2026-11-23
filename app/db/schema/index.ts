@@ -15,6 +15,7 @@ export * from "./permissions";
 export * from "./role-permissions";
 export * from "./audit-logs";
 export * from "./seller-packages";
+export * from "./listing-discounts";
 export * from "./listing-interactions";
 export * from "./saved-listings";
 export * from "./password-resets";

@@ -17,6 +17,10 @@ This is the compact domain guide for Celis. The full product source is `somalia-
 - **Payment:** Charge or collection event.
 - **Payout:** Seller disbursement event.
 - **Seller package:** Paid package controlling seller listing capabilities and benefits.
+- **Package usage:** Assignment-bound listing credit consumption.
+- **Listing discount package:** Versioned percentage/fixed listing-fee offer for one tier.
+- **Discount assignment:** Seller-specific frozen terms, validity and eligible-listing limit.
+- **Listing-fee checkout:** Original/final fee snapshot and reserved discount usage.
 - **Moderation review:** Admin review record for marketplace safety.
 - **Audit log:** Durable trace of sensitive platform actions.
 - **RBAC:** Roles, permissions, role-permissions, and server-enforced access controls.

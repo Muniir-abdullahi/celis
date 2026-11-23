@@ -162,6 +162,13 @@
       "when": 1787669000000,
       "tag": "0031_unpaid_listings_stay_draft",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795421988094,
+      "tag": "0038_seller_cancellation_and_discounts",
+      "breakpoints": true
     }
   ]
 }
