@@ -3,16 +3,13 @@ import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { listings } from "~/db/schema";
 import { getServiceSupabase } from "~/lib/supabase/server";
-import {
-  assertListingFeePayable,
-  getSellerListingPricing,
-} from "~/server/seller-pricing.server";
+import { payListingFee } from "~/server/listing-fee-checkout.server";
 import { isCelisError } from "~/lib/errors";
-import { initiateWalletPayment } from "~/server/payments.server";
 
 const requestSchema = z.object({
   listingId: z.string().uuid(),
-  phone: z.string().min(7).max(20),
+  expectedFeeCents: z.number().int().min(0).optional(),
+  phone: z.string().max(20).default(""),
   idempotencyKey: z.string().min(16).max(160),
 });
 
@@ -68,28 +65,7 @@ export async function POST(request: Request) {
     if (listing.sellerId !== authData.user.id) {
       return json({ message: "Forbidden." }, 403);
     }
-    const pricing = await getSellerListingPricing(
-      authData.user.id,
-      listing.price,
-      listing.categoryId
-    );
-    // A package covers the fee: refuse instead of charging (409).
-    assertListingFeePayable(pricing);
-    console.info("[mobile-listing-payment] starting gateway payment", {
-      requestId,
-      listingId: listing.id,
-      amountCents: pricing.feeCents,
-    });
-    const payment = await initiateWalletPayment(
-      authData.user.id,
-      listing.id,
-      null,
-      "evc",
-      parsed.data.phone,
-      pricing.feeCents,
-      "listing_fee",
-      parsed.data.idempotencyKey
-    );
+    const payment = await payListingFee({ sellerId: authData.user.id, listingId: listing.id, provider: "evc", phone: parsed.data.phone, requestKey: parsed.data.idempotencyKey, expectedFeeCents: parsed.data.expectedFeeCents });
 
     console.info("[mobile-listing-payment] request completed", {
       requestId,
@@ -97,7 +73,7 @@ export async function POST(request: Request) {
       status: payment.status,
       durationMs: Date.now() - startedAt,
     });
-    return json({ ...payment, amountCents: pricing.feeCents });
+    return json(payment);
   } catch (cause) {
     const message =
       cause instanceof Error ? cause.message : "Payment request failed.";

@@ -10,8 +10,8 @@ import {
   getFeaturedListingFeeCents,
 } from "./config.server";
 import { featureListing } from "./listings.server";
-import { assertListingFeePayable, getSellerListingPricing } from "./seller-pricing.server";
-import { monetizationTypeForModel } from "~/lib/pricing";
+import { payListingFee } from "./listing-fee-checkout.server";
+import { isCelisError } from "~/lib/errors";
 import { db } from "~/db";
 import { listings } from "~/db/schema";
 import { eq } from "drizzle-orm";
@@ -47,84 +47,37 @@ function serializeWalletPayment(payment: WalletPaymentRow) {
 
 const initiateSchema = z.object({
   userId: z.string().uuid().optional(),
+  expectedFeeCents: z.number().int().min(0).optional(),
   listingId: z.string().uuid().nullable(),
   orderId: z.string().uuid().nullable(),
   provider: z.enum(WALLET_PROVIDERS),
-  phone: z.string().min(1),
+  phone: z.string().max(20),
   featureListing: z.boolean().optional().default(false),
   idempotencyKey: z.string().min(16).max(160).optional(),
 });
 
 export async function initiatePayment(input: { data: unknown }) {
-  const data = (initiateSchema).parse(input.data);
-
-    const { getCurrentUser } = await import("./auth.server");
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Unauthorized");
-    let amountCents = await getListingFeeCents();
-
-    if (data.listingId) {
-      const [listing] = await db
-        .select({
-          price: listings.price,
-          categoryId: listings.categoryId,
-          sellerId: listings.sellerId,
-        })
-        .from(listings)
-        .where(eq(listings.id, data.listingId))
-        .limit(1);
-      if (listing) {
-        if (listing.sellerId !== user.id) throw new Error("Forbidden");
-        if (data.featureListing) {
-          amountCents = await getFeaturedListingFeeCents();
-        } else {
-          const pricing = await getSellerListingPricing(
-            user.id,
-            listing.price,
-            listing.categoryId
-          );
-          // Never charge a listing fee the seller's package already covers.
-          assertListingFeePayable(pricing);
-          amountCents = pricing.feeCents;
-
-          // Snapshot the pricing inputs/outputs on the listing so the fee
-          // cannot change between payment and approval, and reconciliation
-          // is possible.
-          const monetizationType = monetizationTypeForModel(pricing.monetizationModel);
-          await db
-            .update(listings)
-            .set({
-              feeAmountCents: pricing.feeCents,
-              commissionBps: pricing.commissionBps,
-              currency: pricing.currency,
-              expiresAt: pricing.expiresAt,
-              appliedFeeRuleId: pricing.appliedFeeRuleId,
-              monetizationType,
-              updatedAt: new Date(),
-            })
-            .where(eq(listings.id, data.listingId));
-        }
-      }
+  const data = initiateSchema.parse(input.data);
+  const { requireCurrentUser } = await import("./auth.server");
+  const user = await requireCurrentUser();
+  if (data.listingId && !data.featureListing && !data.orderId) {
+    try {
+      return await payListingFee({ sellerId: user.id, listingId: data.listingId, phone: data.phone, provider: data.provider, requestKey: data.idempotencyKey ?? crypto.randomUUID(), expectedFeeCents: data.expectedFeeCents });
+    } catch (error) {
+      if (isCelisError(error)) return { merchantRef: "", status: "failed" as const, message: error.message, amountCents: data.expectedFeeCents ?? 0 };
+      throw error;
     }
-
-    const result = await initiateWalletPayment(
-      user.id,
-      data.listingId,
-      data.orderId,
-      data.provider,
-      data.phone,
-      amountCents,
-      data.featureListing ? "feature_listing" : data.orderId ? "order" : "listing_fee",
-      data.idempotencyKey
-    );
-
-    if (result.status === "completed" && data.listingId) {
-      if (data.featureListing) {
-        await featureListing(data.listingId, user.id, amountCents);
-      }
-    }
-
-    return result;
+  }
+  let amountCents = await getListingFeeCents();
+  if (data.listingId) {
+    const [listing] = await db.select({ sellerId: listings.sellerId }).from(listings).where(eq(listings.id, data.listingId)).limit(1);
+    if (!listing || listing.sellerId !== user.id) throw new Error("Forbidden");
+    if (data.featureListing) amountCents = await getFeaturedListingFeeCents();
+  }
+  const result = await initiateWalletPayment(user.id, data.listingId, data.orderId, data.provider, data.phone, amountCents,
+    data.featureListing ? "feature_listing" : data.orderId ? "order" : "listing_fee", data.idempotencyKey);
+  if (result.status === "completed" && data.listingId && data.featureListing) await featureListing(data.listingId, user.id, amountCents);
+  return { ...result, amountCents };
 }
 
 const statusSchema = z.object({ merchantRef: z.string().min(1) });

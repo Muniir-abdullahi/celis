@@ -97,6 +97,12 @@ const nav = [
     permission: "settings:manage",
   },
   {
+    to: "/admin/discount-packages",
+    label: "Discount packages",
+    icon: Tags,
+    permission: "settings:manage",
+  },
+  {
     to: "/admin/settings",
     label: "Settings",
     icon: Settings,

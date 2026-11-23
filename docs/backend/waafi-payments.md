@@ -35,6 +35,12 @@ Changing to production disables the UI toggle until the administrator explicitly
 
 ## Purchase boundary
 
+Listing fees now enter `listing-fee-checkout.server.ts` on both web and mobile
+before `initiateWalletPayment`. It reserves discounted usage and freezes the
+quote; zero-fee listings bypass the gateway. Unknown listing-payment outcomes
+retain reservations and require reconciliation. Completed charges are not
+recomputed on retry. See [listing discount lifecycle](listing-discounts.md).
+
 `app/server/waafi.server.ts` implements Waafi `API_PURCHASE` with `MWALLET_ACCOUNT`. A successful transport response is not sufficient. Celis accepts a payment only when:
 
 - direct purchase requests use Waafi's documented `WEB` channel;

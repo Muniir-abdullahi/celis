@@ -110,10 +110,18 @@ Rules:
 
 ## Admin UI
 
-The package detail sellers table has a seller-specific cancellation action.
-The dialog names the seller/package, requires a reason and explicit acknowledgement,
-and explains that published listings and completed payments remain unchanged.
-Cancelled rows show actor, timestamp, reason and notes in existing filters.
+`/admin/discount-packages` manages listing-fee discounts from the admin navigation
+and Settings → Listing pricing tiers. It provides paginated definitions and
+assignments, server search/status filtering, a configured-tier calculator,
+seller search with batch selection, confirmed edits/activation/replacement,
+cancellation reasons/history and a route skeleton. Existing assignments retain
+their snapshots when definitions change. The package detail sellers table also
+has a seller-specific cancellation action, reason and acknowledgement dialog.
+
+The listing wizard previews seller discounts; checkout revalidates them. If
+the fee changes before payment, the modal displays the updated amount and
+requires another confirmation. A zero-fee checkout hides wallet controls and
+submits for review without payment. Refer to `../backend/listing-discounts.md`.
 
 - Admin listing detail (`app/admin/listings/[id]`) includes an "Activity log"
   card (`listing-activity.tsx`) reusing `AdminTable` and `Pagination`.

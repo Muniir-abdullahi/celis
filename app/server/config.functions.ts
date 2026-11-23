@@ -59,6 +59,10 @@ const pricingPreviewSchema = z.object({
 
 export async function getListingPricingPreview(input: { data: unknown }) {
   const data = (pricingPreviewSchema).parse(input.data);
-
-    return computeListingPricing(data.price, data.categoryId);
+  const base = await computeListingPricing(data.price, data.categoryId);
+  const { getCurrentUser } = await import("./auth.server");
+  const user = await getCurrentUser();
+  if (!user || !base.priced) return base;
+  const { getSellerListingPricing } = await import("./seller-pricing.server");
+  return getSellerListingPricing(user.id, data.price, data.categoryId);
 }

@@ -15,6 +15,7 @@ Source of truth is code. Product source is `somalia-p2p-marketplace-prd.md`; des
 | `domain/marketplace.md` | Marketplace terms, listings, orders, payments, packages, moderation, RBAC, audit |
 | `backend/architecture.md` | Server functions, Drizzle/Postgres, Supabase storage, validation, errors |
 | `backend/waafi-payments.md` | Encrypted WaafiPay configuration and server-side purchase boundary |
+| `backend/listing-discounts.md` | Seller cancellation, discount assignments, checkout reservations and rollout |
 | `frontend/ui.md` | Routing, listing UI, admin UI, forms, dialogs, tables, design-system pointer |
 | `operations/runbook.md` | Local commands, migrations, seeding, storage, listing expiry cron |
 | `operations/nextjs-vercel.md` | Next.js migration status, Vercel settings, and required environment variables |

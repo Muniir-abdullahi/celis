@@ -10,7 +10,7 @@ import {
 const wizard = readFileSync("app/components/listings/listing-wizard.tsx", "utf8");
 const validation = readFileSync("app/lib/validation.ts", "utf8");
 const createListing = readFileSync("app/server/listings.functions.ts", "utf8");
-const payments = readFileSync("app/server/payments.functions.ts", "utf8");
+const payments = readFileSync("app/server/listing-fee-checkout.server.ts", "utf8");
 
 test("listing type is derived from the platform monetization model", () => {
   assert.equal(monetizationTypeForModel("fixed_only"), "fixed_rate");

@@ -117,6 +117,10 @@ export function minimumTierPriceCents(config: ListingTiersConfig): number {
 }
 
 export interface ListingPricing {
+  /** Range identity from the same configuration snapshot as the quoted fee. */
+  tierKey?: string;
+  discountCents?: number;
+  standardFeeCents?: number;
   /** False when the price falls in no tier: no fee is computed or payable. */
   priced: boolean;
   /** Null when `priced` is false. */
@@ -213,6 +217,7 @@ export function calculateListingPricing(
   return {
     priced: true,
     tierLabel: tier.label,
+    tierKey: `${tier.minCents}:${tier.maxCents ?? "*"}`,
     baseFeeCents,
     feeCents,
     commissionBps,

@@ -4,18 +4,31 @@
 
 ### Added
 
-- Migration 0038 introduces assignment cancellation metadata, persisted package
-  usage, versioned listing-fee discount definitions, seller assignment snapshots
-  and RLS-protected checkout reservations, with indexes and historical backfill.
-- Shared discount arithmetic, tier identity and cancellation validation schemas
-  include focused unit coverage.
+- Seller-specific package cancellation with reason, acknowledgement, actor/time
+  history and audit records. Published listings and completed payments remain.
+- Versioned listing-fee discount packages, assignment snapshots, batch seller
+  assignment, replacement confirmation, expiry, limits and cancellation at
+  `/admin/discount-packages`, linked from listing pricing settings.
+- Migration 0038 adds assignment-bound allowance consumption, cancellation
+  metadata and RLS-protected discount/checkout tables and indexes.
 
-### Seller package cancellation
+### Changed
 
-- Add seller-specific cancellation with reasons, acknowledgement and audit history.
-- Serialize package assignment, submission and cancellation; consume a listing
-  credit once and retain usage across later listing status changes.
-- Reuse the package-detail seller table for cancellation actions and history.
+- Package submission and cancellation serialize consumption and preserve usage
+  across listing status changes. Historical usage is backfilled at migration.
+- Web and mobile share atomic listing-fee checkout with non-stacking discounts,
+  reserved credits, immutable completed quotes, definitive-failure release and
+  conservative reconciliation for unknown outcomes. Fully discounted listings
+  submit without contacting the gateway.
+- Paid listing edits retain fee snapshots and use the original regular tier;
+  editing is blocked while a payment remains in progress or uncertain.
+
+## [v5.2.1] - 2026-11-23
+
+### Documentation
+
+- Propose a phased plan for seller-specific package cancellation and listing-fee
+  discounts, including payment reservation rules, tests and open product decisions.
 
 ## [v5.2.0] - 2026-11-23
 

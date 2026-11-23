@@ -29,20 +29,6 @@ Rules:
 - Return only the data the UI needs.
 - Avoid unbounded queries.
 
-## Cancellation and discount data foundation
-
-Migration 0038 adds assignment cancellation metadata and listing usage counters
-plus seller_package_usages, listing_discount_packages, seller_discount_assignments
-and listing_fee_checkouts. New tables are RLS-protected for trusted server access.
-The migration and 0038 snapshot/journal entry must stay together; historical
-allowance usage is backfilled before the new consumers are deployed.
-
-Seller-package submission and cancellation use `package-assignment.server.ts`.
-`settings:manage` is required for cancellation. Both share the seller lock with
-reassignment, and consumption also locks the subscription row. Usage is
-assignment-bound and idempotent; cancelling does not alter listings or refund
-payments. Local checks cover ownership, draft state, counters and scoped paging.
-
 ## Drizzle & Postgres
 
 Key files:
@@ -84,6 +70,12 @@ Rules:
 - Storage setup changes must update operations docs.
 
 ## Validation & Errors
+
+Seller-package cancellation and listing-fee discounts use focused server modules
+and assignment-bound transactional usage. The web and mobile listing-fee entry
+points share checkout preparation/finalization; source-of-truth fees are never
+accepted from clients. See [discount and cancellation architecture](listing-discounts.md)
+for policies, RLS, payment reservations, reconciliation and migration 0038.
 
 ### Internal staff and role creation
 

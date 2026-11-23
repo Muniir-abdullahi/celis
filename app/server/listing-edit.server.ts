@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "~/db";
-import { auditLogs, categories, listings } from "~/db/schema";
+import { auditLogs, categories, listings, listingFeeCheckouts } from "~/db/schema";
 import { CelisError } from "~/lib/errors";
 import {
   changedListingFields,
@@ -104,6 +104,10 @@ export async function updateSellerListing(
       .limit(1)
       .for("update");
     assertEditable(current, sellerId);
+    const [checkout] = await tx.select().from(listingFeeCheckouts).where(eq(listingFeeCheckouts.listingId, listingId)).limit(1);
+    if (checkout && ["processing", "pending_reconciliation"].includes(checkout.status)) {
+      throw new CelisError("A payment is in progress for this listing. Wait for reconciliation before editing it.", "LISTING_PAYMENT_IN_PROGRESS", 409);
+    }
     const status = current.status as Parameters<typeof statusAfterEdit>[0];
 
     if (input.categoryId !== current.categoryId) {
@@ -116,11 +120,11 @@ export async function updateSellerListing(
 
     // A paid per-listing fee covers its tier only.
     const feePaid =
-      eligibility.requiresPayment && current.monetizationStatus === "active";
+      (eligibility.requiresPayment || checkout?.status === "completed") && current.monetizationStatus === "active";
     const tier = checkPaidPriceTier({
       feePaid,
-      paidFeeCents: current.feeAmountCents,
-      newFeeCents: pricing.feeCents,
+      paidFeeCents: checkout?.status === "completed" ? checkout.regularFeeCents : current.feeAmountCents,
+      newFeeCents: checkout?.status === "completed" ? pricing.standardFeeCents ?? pricing.feeCents : pricing.feeCents,
     });
     if (!tier.ok) {
       throw new CelisError(

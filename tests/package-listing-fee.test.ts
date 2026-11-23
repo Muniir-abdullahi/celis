@@ -44,8 +44,9 @@ test("package listings are stored and priced with no listing fee", () => {
 
 test("web and mobile payment paths refuse to charge a covered listing", () => {
   assert.match(sellerPricing, /"LISTING_COVERED_BY_PACKAGE",\s*409/);
-  assert.match(paymentsFns, /assertListingFeePayable\(pricing\)/);
-  assert.match(mobileRoute, /assertListingFeePayable\(pricing\)/);
+  assert.match(paymentsFns, /payListingFee\(/);
+  assert.match(mobileRoute, /payListingFee\(/);
+  assert.match(read("app/server/listing-fee-checkout.server.ts"), /assertListingFeePayable\(\{ \.\.\.base, coveredByPackage:/);
 });
 
 test("wizard hides fee tiers and fee for package sellers", () => {

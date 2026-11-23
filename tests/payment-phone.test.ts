@@ -14,7 +14,7 @@ test("payment uses the editable payer number throughout the request boundary", (
   assert.match(action, /data\.phone/);
   assert.doesNotMatch(action, /registeredPhone|Payments must use the phone number registered/);
   assert.match(modal, /You can use any valid Somali wallet number/);
-  assert.match(modal, /disabled=\{!phone \|\| loading\}/);
+  assert.match(modal, /disabled=\{\(!freeSubmission && !phone\) \|\| loading\}/);
   assert.match(footer, /\+252 61 0717124/);
   assert.match(footer, /hello@celis\.so/);
   assert.match(footer, /Xaawo Taako Section, Wadajir District, Mogadishu, Banaadir/);

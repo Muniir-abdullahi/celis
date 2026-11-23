@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
-import { auditLogs, listings, walletPayments } from "~/db/schema";
+import { auditLogs, listings, walletPayments, users } from "~/db/schema";
 import type { WalletProvider } from "~/db/schema";
 import { CelisError } from "~/lib/errors";
 import { getWaafiUserMessage, normalizeWaafiAccountNo } from "~/lib/waafi";
 import { purchaseWithWaafi } from "./waafi.server";
+import { listingPaymentStatus } from "~/lib/listing-payment-result";
 
 export type PaymentPurpose = "listing_fee" | "feature_listing" | "order";
 export type PaymentFlowStatus =
@@ -38,7 +39,8 @@ export async function initiateWalletPayment(
   phone: string,
   amountCents: number,
   purpose: PaymentPurpose = "listing_fee",
-  idempotencyKey?: string
+  idempotencyKey?: string,
+  purchase: typeof purchaseWithWaafi = purchaseWithWaafi
 ): Promise<PaymentInitResult> {
   if (!Number.isInteger(amountCents) || amountCents <= 0) {
     throw new CelisError("Payment amount is invalid", "PAYMENT_AMOUNT_INVALID", 422);
@@ -107,7 +109,7 @@ export async function initiateWalletPayment(
   }
 
   try {
-    const response = await purchaseWithWaafi({
+    const response = await purchase({
       accountNo: normalizedPhone,
       referenceId: merchantRef,
       invoiceId,
@@ -122,18 +124,21 @@ export async function initiateWalletPayment(
     });
 
     const amountMatches = response.amountCents === amountCents;
-    const status: PaymentFlowStatus = response.approved && amountMatches
+    const status: PaymentFlowStatus = purpose === "listing_fee" ? listingPaymentStatus(response, amountCents) : response.approved && amountMatches
       ? "completed"
       : response.approved
         ? "pending_reconciliation"
         : "failed";
-    const message = response.approved && !amountMatches
-      ? "Provider approved a different amount; payment requires reconciliation."
+    const message = status === "pending_reconciliation"
+      ? response.approved ? "Provider approved a different amount; payment requires reconciliation." : "The gateway did not confirm a final payment state; reconciliation is required."
       : response.approved
         ? null
         : getWaafiUserMessage(response.responseMessage);
 
     await db.transaction(async (tx) => {
+      // Checkout preparation locks seller -> listing -> checkout. Take the
+      // same seller lock before wallet/listing writes and the audit actor FK.
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for("update");
       await tx.update(walletPayments).set({
         status,
         walletRef: response.transactionId,
@@ -196,7 +201,7 @@ export async function initiateWalletPayment(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "WaafiPay request failed.";
-    const ambiguous = /timed out|reconciliation/i.test(message);
+    const ambiguous = purpose === "listing_fee" || /timed out|reconciliation/i.test(message);
     const status: PaymentFlowStatus = ambiguous ? "pending_reconciliation" : "failed";
     await db
       .update(walletPayments)

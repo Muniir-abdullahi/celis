@@ -60,18 +60,18 @@ test("server charging paths refuse unpriced prices; previews stay neutral", () =
   const preview = readFileSync("app/server/config.functions.ts", "utf8");
   const approval = readFileSync("app/server/listings.server.ts", "utf8");
   assert.match(config, /if \(!pricing\.priced\) \{[\s\S]*?"PRICE_OUTSIDE_TIERS"/);
-  assert.match(preview, /return computeListingPricing\(data\.price, data\.categoryId\)/);
+  assert.match(preview, /computeListingPricing\(data\.price, data\.categoryId\)/);
   assert.match(approval, /computeListingPricing\(listing\.price, listing\.categoryId\)/);
   // Create, edit and both payment entry points go through the seller pricing
   // helper, which uses the strict version for fee-paying sellers.
   for (const file of [
     "app/server/listings.functions.ts",
     "app/server/listing-edit.server.ts",
-    "app/server/payments.functions.ts",
-    "app/api/mobile/payments/listing-fee/route.ts",
   ]) {
     assert.match(readFileSync(file, "utf8"), /getSellerListingPricing\(/, file);
   }
+  const checkout = readFileSync("app/server/listing-fee-checkout.server.ts", "utf8");
+  assert.match(checkout, /if \(!base\.priced\) throw new CelisError\([\s\S]*?"PRICE_OUTSIDE_TIERS"/);
   assert.match(
     readFileSync("app/server/seller-pricing.server.ts", "utf8"),
     /const pricing = await getListingPricing\(priceCents, categoryId\)/

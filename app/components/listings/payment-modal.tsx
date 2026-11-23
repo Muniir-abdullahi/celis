@@ -52,12 +52,16 @@ export function PaymentModal({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [updatedAmount, setUpdatedAmount] = useState<number | null>(null);
+  const currentAmount = updatedAmount ?? amountCents;
+  const freeSubmission = !featureListing && currentAmount === 0;
   const providerOptions = WALLET_PROVIDERS.map((p) => ({
     value: p,
     label: p.charAt(0).toUpperCase() + p.slice(1),
   }));
 
   const reset = () => {
+    setUpdatedAmount(null);
     setProvider(providers[0]);
     setPhone(null);
     setMerchantRef(null);
@@ -80,8 +84,10 @@ export function PaymentModal({
           phone,
           featureListing,
           idempotencyKey,
+          expectedFeeCents: currentAmount,
         },
       });
+      if (typeof result.amountCents === "number") setUpdatedAmount(result.amountCents);
       if (result.status === "completed") {
         setMerchantRef(result.merchantRef);
         setSuccess(true);
@@ -109,28 +115,28 @@ export function PaymentModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {featureListing ? "Pay feature fee" : "Pay listing fee"}
+            {featureListing ? "Pay feature fee" : freeSubmission ? "Submit discounted listing" : "Pay listing fee"}
           </DialogTitle>
           <DialogDescription>
             {featureListing
-              ? `Feature this listing for ${formatPrice(amountCents)} via mobile money.`
-              : `Activate your listing for ${formatPrice(amountCents)} via mobile money.`}
+              ? `Feature this listing for ${formatPrice(currentAmount)} via mobile money.`
+              : freeSubmission ? "Your listing fee is fully covered by the discount. Submit it for moderation without a wallet payment." : `Activate your listing for ${formatPrice(currentAmount)} via mobile money.`}
           </DialogDescription>
         </DialogHeader>
 
         {success ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <CheckCircle2 className="h-12 w-12 text-celis-success" />
-            <p className="text-lg font-medium">Payment received</p>
+            <p className="text-lg font-medium">{freeSubmission ? "Listing submitted" : "Payment received"}</p>
             <p className="text-sm text-celis-ink-secondary">
               {featureListing
                 ? "Your listing is now featured for 7 days."
-                : "Your payment is confirmed. The listing was submitted for review."}
+                : freeSubmission ? "Your discounted listing was submitted for review. No payment was taken." : "Your payment is confirmed. The listing was submitted for review."}
             </p>
           </div>
         ) : (
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
+            {!freeSubmission ? <><div className="space-y-2">
               <Label htmlFor="provider">Mobile wallet</Label>
               <Combobox
                 value={provider}
@@ -156,6 +162,7 @@ export function PaymentModal({
               </p>
             </div>
 
+            </> : <p className="rounded-md bg-celis-success-subtle p-3 text-sm">Your listing fee is fully discounted. No wallet payment is needed.</p>}
             {merchantRef && (
               <div className="rounded-md bg-celis-primary-subtle p-3 text-sm text-celis-ink-secondary">
                 <p className="font-medium text-celis-ink">Payment requires reconciliation</p>
@@ -174,9 +181,9 @@ export function PaymentModal({
 
         <DialogFooter>
           {!success && !merchantRef && (
-            <Button onClick={handleInitiate} disabled={!phone || loading} className="w-full sm:w-auto">
+            <Button onClick={handleInitiate} disabled={(!freeSubmission && !phone) || loading} className="w-full sm:w-auto">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Pay {formatPrice(amountCents)}
+              {freeSubmission ? "Submit for review" : `Pay ${formatPrice(currentAmount)}`}
             </Button>
           )}
           {!success && merchantRef && (

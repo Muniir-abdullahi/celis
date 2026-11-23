@@ -173,7 +173,7 @@ export function ListingWizard({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [createdListingId, setCreatedListingId] = useState<string | null>(null);
-  const [serverFeeCents, setServerFeeCents] = useState<number>(0);
+  const [serverFeeCents, setServerFeeCents] = useState<number | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [submittedForReview, setSubmittedForReview] = useState(false);
   const [savedEdit, setSavedEdit] = useState<{
@@ -791,6 +791,7 @@ export function ListingWizard({
                 <p className="font-medium text-celis-ink">
                   {preview.tierLabel} tier
                 </p>
+                {(preview.discountCents ?? 0) > 0 && <p className="text-sm text-celis-success">Seller discount: save {formatPrice(preview.discountCents ?? 0)} (regular {formatPrice(preview.standardFeeCents ?? 0)})</p>}
                 {preview.feeCents > 0 && (
                   <p>
                     Listing fee:{" "}
@@ -957,7 +958,7 @@ export function ListingWizard({
               {!runsPublishFlow
                 ? "Save changes"
                 : eligibility?.requiresPayment
-                ? `Publish & pay ${formatPrice(serverFeeCents || preview.totalFeeCents)}`
+                ? (serverFeeCents ?? preview.totalFeeCents) === 0 ? "Publish without a listing fee" : `Publish & pay ${formatPrice(serverFeeCents ?? preview.totalFeeCents)}`
                 : coveredByPackage
                 ? `Publish (package: ${
                     eligibility?.remainingListings === null
@@ -975,7 +976,7 @@ export function ListingWizard({
         onOpenChange={setPaymentOpen}
         userId={sellerId}
         listingId={createdListingId}
-        amountCents={serverFeeCents || preview.totalFeeCents}
+        amountCents={serverFeeCents ?? preview.totalFeeCents}
         enabledProviders={enabledWalletProviders}
         onSuccess={() => setSubmittedForReview(true)}
       />
