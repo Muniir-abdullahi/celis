@@ -14,7 +14,6 @@ import {
 import type { ListingInput } from "~/lib/validation";
 import { CelisError } from "~/lib/errors";
 import type { listings as listingsTable } from "~/db/schema";
-import { getSellerListingEligibility } from "./seller-packages.server";
 import { createNotification } from "./notifications.server";
 
 export type ListingMetadata = Record<string, string | number | boolean | string[] | null>;
@@ -219,40 +218,9 @@ export async function submitListingForReview(id: string) {
   return updated;
 }
 
-export async function submitShopListingForReview(
-  id: string,
-  sellerId: string
-) {
-  // Only the owner may submit, and only an unsubmitted draft.
-  const [listing] = await db
-    .select({ sellerId: listings.sellerId, status: listings.status })
-    .from(listings)
-    .where(eq(listings.id, id))
-    .limit(1);
-  if (!listing) {
-    throw new CelisError("Listing not found", "LISTING_NOT_FOUND", 404);
-  }
-  if (listing.sellerId !== sellerId) {
-    throw new CelisError("Forbidden", "FORBIDDEN", 403);
-  }
-  if (listing.status !== "draft") {
-    throw new CelisError(
-      "Only draft listings can be submitted for review",
-      "LISTING_NOT_DRAFT",
-      400
-    );
-  }
-  // Any seller (shop or individual) with an active package that still has
-  // credits submits without paying a listing fee.
-  const eligibility = await getSellerListingEligibility(sellerId);
-  if (!eligibility.subscription || !eligibility.canList) {
-    throw new CelisError(
-      "No active listing package with remaining credits",
-      "SHOP_PACKAGE_REQUIRED",
-      402
-    );
-  }
-  return submitListingForReview(id);
+export async function submitShopListingForReview(id: string, sellerId: string) {
+  const { consumeSellerPackage } = await import("./package-assignment.server");
+  return consumeSellerPackage(id, sellerId);
 }
 
 export const FEATURED_LISTING_DURATION_DAYS = 7;

@@ -1,9 +1,8 @@
-import { and, count, desc, eq, gte, ilike, inArray, lt, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, lt, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "~/db";
 import {
   listingPackages,
-  listings,
   profiles,
   sellerSubscriptions,
   users,
@@ -102,6 +101,11 @@ export async function getPackageSubscribers(options: {
       sellerType: profiles.sellerType,
       email: users.email,
       status: sellerSubscriptions.status,
+      listingsUsed: sellerSubscriptions.listingsUsed,
+      cancelledAt: sellerSubscriptions.cancelledAt,
+      cancelledBy: sellerSubscriptions.cancelledBy,
+      cancellationReason: sellerSubscriptions.cancellationReason,
+      cancellationNotes: sellerSubscriptions.cancellationNotes,
       startedAt: sellerSubscriptions.startedAt,
       expiresAt: sellerSubscriptions.expiresAt,
       assignmentSource: sellerSubscriptions.assignmentSource,
@@ -124,29 +128,6 @@ export async function getPackageSubscribers(options: {
     .leftJoin(profiles, eq(profiles.id, sellerSubscriptions.sellerId))
     .where(where);
 
-  // Listings used per assignment, for this page only (same rule as package
-  // credits: active / pending_review / sold listings since the start date).
-  const used = new Map<string, number>();
-  if (rows.length > 0) {
-    const usage = await db
-      .select({
-        subscriptionId: sellerSubscriptions.id,
-        used: count(listings.id),
-      })
-      .from(sellerSubscriptions)
-      .leftJoin(
-        listings,
-        and(
-          eq(listings.sellerId, sellerSubscriptions.sellerId),
-          gte(listings.createdAt, sellerSubscriptions.startedAt),
-          inArray(listings.status, ["active", "pending_review", "sold"])
-        )
-      )
-      .where(inArray(sellerSubscriptions.id, rows.map((r) => r.subscriptionId)))
-      .groupBy(sellerSubscriptions.id);
-    for (const u of usage) used.set(u.subscriptionId, Number(u.used));
-  }
-
   const now = Date.now();
   return {
     items: rows.map((r) => ({
@@ -154,7 +135,7 @@ export async function getPackageSubscribers(options: {
       // Derived status so a lapsed "active" row reads as expired.
       effectiveStatus:
         r.status === "active" && r.expiresAt.getTime() < now ? ("expired" as const) : r.status,
-      listingsUsed: used.get(r.subscriptionId) ?? 0,
+
     })),
     total: Number(total),
     page: options.page,

@@ -30,8 +30,8 @@ test("sellers are filtered, searched and paginated on the server", () => {
   assert.match(body, /eq\(sellerSubscriptions\.packageId, options\.packageId\)/);
   assert.match(body, /\.limit\(options\.limit\)\s*\.offset\(offset\)/);
   assert.match(body, /ilike\(users\.email,/);
-  // Listings used is computed for the current page only.
-  assert.match(body, /inArray\(sellerSubscriptions\.id, rows\.map/);
+  // Usage is now an assignment-bound persisted counter, not an unbounded listing scan.
+  assert.match(body, /listingsUsed: sellerSubscriptions\.listingsUsed/);
 });
 
 test("'active' means status active and not past expiry", () => {

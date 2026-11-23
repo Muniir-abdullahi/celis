@@ -36,10 +36,11 @@ test("eligibility and shop submit use the signed-in user", () => {
 });
 
 test("shop submit checks ownership and draft status before using a package credit", () => {
-  const body = fnBody(listingsServer, "submitShopListingForReview");
+  assert.match(fnBody(listingsServer, "submitShopListingForReview"), /consumeSellerPackage\(id, sellerId\)/);
+  const body = readFileSync("app/server/package-assignment.server.ts", "utf8");
   const ownership = body.indexOf("listing.sellerId !== sellerId");
   const draft = body.indexOf('listing.status !== "draft"');
-  const eligibility = body.indexOf("getSellerListingEligibility(sellerId)");
+  const eligibility = body.indexOf("row.sub.listingsUsed >= row.pkg.listingAllowance");
   assert.ok(ownership > 0 && draft > 0 && eligibility > 0);
   assert.ok(ownership < eligibility && draft < eligibility);
 });

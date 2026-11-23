@@ -31,7 +31,8 @@ test("an active package covers fees for individual sellers too", () => {
 
 test("package submit accepts any seller with an active package", () => {
   const body = fnBody(listingsServer, "submitShopListingForReview");
-  assert.match(body, /if \(!eligibility\.subscription \|\| !eligibility\.canList\)/);
+  assert.match(body, /consumeSellerPackage\(id, sellerId\)/);
+  assert.match(read("app/server/package-assignment.server.ts"), /row\.sub\.listingsUsed >= row\.pkg\.listingAllowance/);
   assert.doesNotMatch(body, /sellerType !== "shop"/);
 });
 

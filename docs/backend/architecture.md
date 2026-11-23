@@ -37,6 +37,12 @@ and listing_fee_checkouts. New tables are RLS-protected for trusted server acces
 The migration and 0038 snapshot/journal entry must stay together; historical
 allowance usage is backfilled before the new consumers are deployed.
 
+Seller-package submission and cancellation use `package-assignment.server.ts`.
+`settings:manage` is required for cancellation. Both share the seller lock with
+reassignment, and consumption also locks the subscription row. Usage is
+assignment-bound and idempotent; cancelling does not alter listings or refund
+payments. Local checks cover ownership, draft state, counters and scoped paging.
+
 ## Drizzle & Postgres
 
 Key files:

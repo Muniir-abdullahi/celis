@@ -13,6 +13,8 @@ import { AdminTable } from "~/components/admin/admin-table";
 import { PageHeader } from "~/components/admin/page-header";
 import { formatDate, formatPrice } from "~/lib/format";
 import { ArrowLeft, Search } from "lucide-react";
+import { CancelAssignmentDialog } from "~/components/admin/cancel-assignment-dialog";
+import { cancelSellerPackageAssignment } from "~/server/package-assignment.functions";
 
 type DetailData = Awaited<ReturnType<typeof fetchAdminPackageDetail>>;
 type Filter = DetailData["filter"];
@@ -210,6 +212,9 @@ export function PackageDetailContent({ data }: { data: DetailData }) {
                     </span>
                   ),
                 },
+                { key: "actions", header: "Actions / cancellation", cell: (s) => s.effectiveStatus === "active"
+                  ? <CancelAssignmentDialog seller={s.sellerName ?? s.email} packageName={pkg.name} onCancel={(input) => cancelSellerPackageAssignment({ data: { ...input, assignmentId: s.subscriptionId } })} />
+                  : s.cancelledAt ? <div className="text-xs text-celis-ink-secondary"><p>{s.cancellationReason?.replaceAll("_", " ")}</p><p>{formatDate(s.cancelledAt)}</p><p>Admin: {s.cancelledBy}</p>{s.cancellationNotes && <p>{s.cancellationNotes}</p>}</div> : "—" },
               ]}
             />
           )}

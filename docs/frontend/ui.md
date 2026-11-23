@@ -110,6 +110,11 @@ Rules:
 
 ## Admin UI
 
+The package detail sellers table has a seller-specific cancellation action.
+The dialog names the seller/package, requires a reason and explicit acknowledgement,
+and explains that published listings and completed payments remain unchanged.
+Cancelled rows show actor, timestamp, reason and notes in existing filters.
+
 - Admin listing detail (`app/admin/listings/[id]`) includes an "Activity log"
   card (`listing-activity.tsx`) reusing `AdminTable` and `Pagination`.
 

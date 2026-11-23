@@ -143,10 +143,7 @@ export async function getSellerListingEligibility(sellerId: string) {
     };
   }
 
-  const used = await countSubscriptionListings(
-    sellerId,
-    sub.subscription.startedAt
-  );
+  const used = sub.subscription.listingsUsed;
   const remaining = sub.package.isUnlimited
     ? null
     : Math.max(0, sub.package.listingAllowance - used);
@@ -171,7 +168,9 @@ export async function assignSellerPackage(
     pricePaidCents?: number;
   }
 ) {
-  const pkg = await db
+  await db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, sellerId)).for("update");
+  const pkg = await tx
     .select()
     .from(listingPackages)
     .where(eq(listingPackages.id, packageId))
@@ -185,7 +184,7 @@ export async function assignSellerPackage(
 
   // A seller can only have one active subscription at a time. Cancel any
   // existing active subscription before assigning the new one.
-  await db
+  await tx
     .update(sellerSubscriptions)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(
@@ -195,7 +194,7 @@ export async function assignSellerPackage(
       )
     );
 
-  await db.insert(sellerSubscriptions).values({
+  await tx.insert(sellerSubscriptions).values({
     sellerId,
     packageId,
     startedAt,
@@ -207,6 +206,8 @@ export async function assignSellerPackage(
     pricePaidCents: options?.pricePaidCents,
   });
 
+
+  });
   return getActiveSellerSubscription(sellerId);
 }
 
@@ -513,10 +514,7 @@ export async function getSellerSubscriptions(sellerId: string) {
 export async function getCurrentSellerSubscription(sellerId: string) {
   const sub = await getActiveSellerSubscription(sellerId);
   if (!sub) return null;
-  const used = await countSubscriptionListings(
-    sellerId,
-    sub.subscription.startedAt
-  );
+  const used = sub.subscription.listingsUsed;
   return {
     packageName: sub.package.name,
     listingAllowance: sub.package.isUnlimited

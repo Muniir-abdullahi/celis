@@ -10,6 +10,13 @@
 - Shared discount arithmetic, tier identity and cancellation validation schemas
   include focused unit coverage.
 
+### Seller package cancellation
+
+- Add seller-specific cancellation with reasons, acknowledgement and audit history.
+- Serialize package assignment, submission and cancellation; consume a listing
+  credit once and retain usage across later listing status changes.
+- Reuse the package-detail seller table for cancellation actions and history.
+
 ## [v5.2.0] - 2026-11-23
 
 ### Added
