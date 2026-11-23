@@ -1,5 +1,14 @@
 # Changelog
 
+## [v5.1.0] - 2026-11-23
+
+### Added
+
+- Reusable admin skeletons and App Router loading boundaries for every admin
+  page, including dashboard, roles, settings and detail layouts. Admin tables
+  and category configuration dialogs use structured skeletons; skeleton motion
+  respects reduced-motion preferences.
+
 ## [v5.0.0] - 2026-11-23
 
 ### Fixed

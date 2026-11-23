@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { cn } from "~/lib/utils";
+import { Skeleton } from "~/components/ui/skeleton";
 
 interface Column<T> {
   key: string;
@@ -31,7 +32,8 @@ export function AdminTable<T>({
   keyExtractor,
 }: AdminTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-md border border-celis-border">
+    <div className="overflow-hidden rounded-md border border-celis-border" aria-busy={loading}>
+      {loading && <span role="status" className="sr-only">Loading records…</span>}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -45,14 +47,9 @@ export function AdminTable<T>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center text-celis-ink-secondary"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 6 }, (_, row) => <TableRow key={row} aria-hidden="true">
+                {columns.map((col) => <TableCell key={col.key} className={cn("py-4", col.className)}><Skeleton className="h-4 w-3/4" /></TableCell>)}
+              </TableRow>)
             ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell

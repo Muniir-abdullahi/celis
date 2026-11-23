@@ -36,6 +36,19 @@ saves. Failed role saves retain the form; a newly created role is selected so
 its permissions can be configured. Duplicate and invalid keys display inline
 errors. New roles have no permissions until explicitly configured.
 
+### Admin loading states
+
+Every admin page now has an App Router `loading.tsx` boundary. The shell remains
+around page transitions after its authorization loader has resolved. Loading
+UI uses `admin-page-skeleton.tsx` and `roles-skeleton.tsx`: dashboard cards/charts,
+tables, detail/settings forms, and the roles workspace match their broad content
+shapes. Role permission changes use the same grouped-permission skeleton;
+AdminTable's loading prop and category dialogs also render structured skeletons.
+Existing lazy settings and payment-gateway skeletons remain in use. All skeletons
+respect reduced motion; loading regions expose accessible busy/status labels.
+
+Verification: Production build, TypeScript and the rendered loading-state test pass.
+
 Key files:
 
 - `app/layout.tsx`

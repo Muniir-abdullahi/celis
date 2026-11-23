@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { AdminFieldsSkeleton } from "~/components/admin/admin-page-skeleton";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -780,7 +781,7 @@ export function CategoriesContent({ categories, subcategories, permissions, sear
             </DialogTitle>
           </DialogHeader>
           {conditionsLoading && conditions.length === 0 ? (
-            <p className="text-sm text-celis-ink-secondary">Loading...</p>
+            <AdminFieldsSkeleton />
           ) : (
             <div className="max-h-[60vh] space-y-3 overflow-y-auto py-2">
               {conditions.length === 0 && (
@@ -922,7 +923,7 @@ export function CategoriesContent({ categories, subcategories, permissions, sear
             <DialogTitle>Fields for {fieldsCategory?.name}</DialogTitle>
           </DialogHeader>
           {fieldsLoading && fields.length === 0 ? (
-            <p className="text-sm text-celis-ink-secondary">Loading...</p>
+            <AdminFieldsSkeleton />
           ) : (
             <div className="max-h-[60vh] space-y-3 overflow-y-auto py-2">
               {fields.length === 0 && (
