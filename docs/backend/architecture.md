@@ -29,6 +29,14 @@ Rules:
 - Return only the data the UI needs.
 - Avoid unbounded queries.
 
+## Cancellation and discount data foundation
+
+Migration 0038 adds assignment cancellation metadata and listing usage counters
+plus seller_package_usages, listing_discount_packages, seller_discount_assignments
+and listing_fee_checkouts. New tables are RLS-protected for trusted server access.
+The migration and 0038 snapshot/journal entry must stay together; historical
+allowance usage is backfilled before the new consumers are deployed.
+
 ## Drizzle & Postgres
 
 Key files:
