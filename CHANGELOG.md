@@ -1,5 +1,24 @@
 # Changelog
 
+## [v5.0.0] - 2026-11-23
+
+### Fixed
+
+- Internal staff creation handles Supabase-trigger-created users/profiles with
+  transactional upserts and audit logging. Failed setup removes only the newly
+  created Auth account; failed cleanup reports the orphan ID for support.
+- Staff and role create/edit actions return safe, readable validation and
+  operation errors instead of masked production React errors. Staff forms use
+  the available internal roles and require confirmation before creation.
+- Role creation normalizes and validates keys before insertion, handles
+  duplicate-key races, and audits creation/editing in the write transaction.
+
+### Changed
+
+- Role creation/editing now enforce the UI's super-admin restriction on the
+  server as well as `settings:manage`. System role domains and assigned-role
+  domains cannot change. Role saves and permission saves require confirmation.
+
 ## [v4.4.1] - 2026-11-23
 
 ### Fixed

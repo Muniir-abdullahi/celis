@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { PageHeader } from "~/components/admin/page-header";
+import { ConfirmDialog } from "~/components/admin/confirm-dialog";
 import {
   fetchRolePermissions,
   updateRolePermissions,
@@ -52,6 +53,7 @@ export function RolesContent({ data }: { data: RolesData }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"role" | "permissions" | null>(null);
 
   const [roleDialog, setRoleDialog] = useState<{
     open: boolean;
@@ -123,19 +125,25 @@ export function RolesContent({ data }: { data: RolesData }) {
 
   const handleRoleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmAction("role");
+  };
+
+  const saveRole = async () => {
     if (!canManage) return;
     setRoleFormLoading(true);
     setRoleFormError(null);
     try {
-      if (roleDialog.mode === "create") {
-        await createRoleFn({ data: roleForm });
-      } else {
-        await updateRoleFn({ data: roleForm });
-      }
+      const result = roleDialog.mode === "create"
+        ? await createRoleFn({ data: roleForm })
+        : await updateRoleFn({ data: roleForm });
+      setConfirmAction(null);
+      if (!result.success) { setRoleFormError(result.error); return; }
+      setSelectedRole(result.data.key);
       router.refresh();
       setRoleDialog({ open: false, mode: "create" });
     } catch (err) {
-      setRoleFormError(err instanceof Error ? err.message : "Failed to save role");
+      setConfirmAction(null);
+      setRoleFormError("Could not save the role. Please try again.");
     } finally {
       setRoleFormLoading(false);
     }
@@ -263,7 +271,7 @@ export function RolesContent({ data }: { data: RolesData }) {
           )}
 
           <div className="flex items-center gap-3 pt-2">
-            <Button onClick={handleSave} disabled={!canManage || saving || loading}>
+            <Button onClick={() => setConfirmAction("permissions")} disabled={!canManage || saving || loading}>
               {saving ? "Saving..." : "Save permissions"}
             </Button>
             {saved && <span className="text-sm text-celis-success">Saved.</span>}
@@ -271,7 +279,7 @@ export function RolesContent({ data }: { data: RolesData }) {
         </CardContent>
       </Card>
 
-      <Dialog open={roleDialog.open} onOpenChange={(open) => setRoleDialog((d) => ({ ...d, open }))}>
+      <Dialog open={roleDialog.open} onOpenChange={(open) => { if (!roleFormLoading) setRoleDialog((d) => ({ ...d, open })); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -294,6 +302,8 @@ export function RolesContent({ data }: { data: RolesData }) {
                 }
                 placeholder="e.g. finance_officer"
                 disabled={roleDialog.mode === "edit"}
+                minLength={2}
+                maxLength={60}
                 required
               />
               <p className="text-xs text-celis-ink-tertiary">
@@ -309,6 +319,9 @@ export function RolesContent({ data }: { data: RolesData }) {
                   setRoleForm((f) => ({ ...f, label: e.target.value }))
                 }
                 placeholder="e.g. Finance Officer"
+                minLength={2}
+                maxLength={80}
+                disabled={roleFormLoading}
                 required
               />
             </div>
@@ -322,6 +335,8 @@ export function RolesContent({ data }: { data: RolesData }) {
                 }
                 placeholder="What can this role do?"
                 rows={3}
+                maxLength={500}
+                disabled={roleFormLoading}
               />
             </div>
             <div className="space-y-2">
@@ -342,7 +357,7 @@ export function RolesContent({ data }: { data: RolesData }) {
               </Select>
             </div>
             {roleFormError && (
-              <p className="text-sm text-destructive">{roleFormError}</p>
+              <p role="alert" className="text-sm text-destructive">{roleFormError}</p>
             )}
             <DialogFooter>
               <Button
@@ -360,6 +375,14 @@ export function RolesContent({ data }: { data: RolesData }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open && !roleFormLoading && !saving) setConfirmAction(null); }}
+        title={confirmAction === "permissions" ? "Save role permissions?" : roleDialog.mode === "create" ? "Create role?" : "Update role?"}
+        description={confirmAction === "permissions"
+          ? `Apply the selected permissions to ${selectedRoleRecord?.label ?? selectedRole}? Users assigned to this role will receive these permissions.`
+          : `${roleDialog.mode === "create" ? "Create" : "Update"} ${roleForm.label} as a ${roleForm.domain} role? New roles start without permissions; configure and save their permissions after creation.`}
+        loading={roleFormLoading || saving} confirmLabel="Confirm"
+        onConfirm={() => { if (confirmAction === "role") void saveRole(); else { setConfirmAction(null); void handleSave(); } }} />
 
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog((d) => ({ ...d, open }))}>
         <DialogContent className="sm:max-w-md">

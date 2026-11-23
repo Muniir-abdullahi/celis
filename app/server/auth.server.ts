@@ -1,5 +1,7 @@
 import { db } from "~/db";
-import { users, profiles, authUsers, permissions, rolePermissions, roles } from "~/db/schema";
+import { users, profiles, authUsers, permissions, rolePermissions, roles, auditLogs } from "~/db/schema";
+import { AdminInputError } from "~/lib/admin-mutation";
+import { roleInputSchema } from "~/lib/role-input";
 import { eq } from "drizzle-orm";
 import { getSupabaseServerClient } from "~/lib/supabase/server";
 import {
@@ -217,14 +219,6 @@ export interface RoleRecord {
   updatedAt: Date;
 }
 
-function slugifyRoleKey(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
 export async function listRoles(): Promise<RoleRecord[]> {
   return db.select().from(roles).orderBy(roles.domain, roles.label);
 }
@@ -234,49 +228,51 @@ export async function getRoleByKey(key: string): Promise<RoleRecord | null> {
   return row ?? null;
 }
 
-export async function createRole(input: {
-  key: string;
-  label: string;
-  description?: string;
-  domain: "customer" | "internal";
-}) {
-  await requirePermission("settings:manage");
-
-  const key = slugifyRoleKey(input.key);
-  if (!key) throw new Error("Role key is required");
-  const existing = await getRoleByKey(key);
-  if (existing) throw new Error("Role key already exists");
-
-  const [created] = await db
-    .insert(roles)
-    .values({
-      key,
-      label: input.label.trim(),
-      description: input.description?.trim() || null,
-      domain: input.domain,
-    })
-    .returning();
-  return created;
+export async function createRole(rawInput: unknown) {
+  const actor = await requirePermission("settings:manage");
+  if (!actor.isSuperAdmin) throw new Error("Forbidden");
+  const input = roleInputSchema.parse(rawInput);
+  return db.transaction(async (tx) => {
+    const [created] = await tx.insert(roles).values({
+      ...input, description: input.description || null,
+    }).onConflictDoNothing({ target: roles.key }).returning();
+    if (!created) throw new AdminInputError("Role key already exists. Choose a different key.");
+    await tx.insert(auditLogs).values({
+      actorId: actor.id, action: "role_created", resourceType: "role", resourceId: created.id,
+      metadata: { key: created.key, label: created.label, domain: created.domain },
+    });
+    return created;
+  });
 }
 
 export async function updateRole(
   key: string,
   input: { label: string; description?: string; domain: "customer" | "internal" }
 ) {
-  await requirePermission("settings:manage");
-
-  const [updated] = await db
-    .update(roles)
-    .set({
-      label: input.label.trim(),
-      description: input.description?.trim() || null,
-      domain: input.domain,
+  const actor = await requirePermission("settings:manage");
+  if (!actor.isSuperAdmin) throw new Error("Forbidden");
+  const data = roleInputSchema.parse({ key, ...input });
+  return db.transaction(async (tx) => {
+    const [existing] = await tx.select().from(roles).where(eq(roles.key, key)).for("update");
+    if (!existing) throw new AdminInputError("Role not found.");
+    if (existing.domain !== data.domain) {
+      if (existing.isSystem) throw new AdminInputError("System role domains cannot be changed.");
+      const [assigned] = await tx.select({ id: users.id }).from(users).where(eq(users.role, key)).limit(1);
+      if (assigned) throw new AdminInputError("The domain of an assigned role cannot be changed.");
+    }
+    const [updated] = await tx.update(roles).set({
+      label: data.label,
+      description: data.description || null,
+      domain: data.domain,
       updatedAt: new Date(),
-    })
-    .where(eq(roles.key, key))
-    .returning();
-  if (!updated) throw new Error("Role not found");
-  return updated;
+    }).where(eq(roles.key, key)).returning();
+    if (!updated) throw new AdminInputError("Role not found.");
+    await tx.insert(auditLogs).values({
+      actorId: actor.id, action: "role_updated", resourceType: "role", resourceId: updated.id,
+      metadata: { key, previousDomain: existing.domain, domain: updated.domain, label: updated.label },
+    });
+    return updated;
+  });
 }
 
 export async function deleteRole(key: string) {

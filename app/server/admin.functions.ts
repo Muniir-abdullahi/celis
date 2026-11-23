@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { adminMutation } from "~/lib/admin-mutation";
 import type { UserRole } from "~/db/schema";
 import {
   getAdminDashboardStats,
@@ -81,17 +82,8 @@ export async function fetchAdminUsers(input: { data: unknown }) {
     return getAdminUsers(data);
 }
 
-const createInternalUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  role: userRoleSchema,
-  department: z.string().optional(),
-});
-
 export async function createAdminInternalUser(input: { data: unknown }) {
-  const data = (createInternalUserSchema).parse(input.data);
-
-    return createInternalUser(data);
+  return adminMutation(() => createInternalUser(input.data));
 }
 
 const updateRoleSchema = z.object({

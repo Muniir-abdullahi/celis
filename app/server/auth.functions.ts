@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { adminMutation } from "~/lib/admin-mutation";
 import { getSignInErrorMessage } from "~/lib/auth-errors";
 import {
   getSupabaseServerClient,
@@ -248,16 +249,8 @@ export async function fetchRoles() {
   return listRoles();
 }
 
-const createRoleSchema = z.object({
-  key: z.string().min(2).max(60),
-  label: z.string().min(2).max(80),
-  description: z.string().max(500).optional(),
-  domain: z.enum(["customer", "internal"]).default("internal"),
-});
-
 export async function createRoleFn(input: { data: unknown }) {
-  const data = (createRoleSchema).parse(input.data);
-return createRole(data);
+  return adminMutation(() => createRole(input.data));
 }
 
 const updateRoleSchema = z.object({
@@ -268,8 +261,10 @@ const updateRoleSchema = z.object({
 });
 
 export async function updateRoleFn(input: { data: unknown }) {
-  const data = (updateRoleSchema).parse(input.data);
-return updateRole(data.key, data);
+  return adminMutation(async () => {
+    const data = updateRoleSchema.parse(input.data);
+    return updateRole(data.key, data);
+  });
 }
 
 const deleteRoleSchema = z.object({ key: z.string() });

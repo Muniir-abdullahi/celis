@@ -25,6 +25,17 @@ tables, and the design-system pointer.
 
 ## Routing & Pages
 
+On `/admin/users`, the internal-user form lives in
+`app/components/admin/create-internal-user-dialog.tsx`. It lists current
+internal roles, disables creation when none exist, bounds inputs, confirms the
+email/role before provisioning, prevents dismissal while saving, and displays
+returned action errors inline. No role key is hard-coded as the default.
+
+On `/admin/roles`, super admins confirm role creation/editing and permission
+saves. Failed role saves retain the form; a newly created role is selected so
+its permissions can be configured. Duplicate and invalid keys display inline
+errors. New roles have no permissions until explicitly configured.
+
 Key files:
 
 - `app/layout.tsx`

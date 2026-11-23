@@ -71,6 +71,41 @@ Rules:
 
 ## Validation & Errors
 
+### Internal staff and role creation
+
+`createAdminInternalUser`, `createRoleFn`, and `updateRoleFn` return
+`{ success: true, data }` or `{ success: false, error }`. Expected validation,
+duplicate identity/key, and authorization failures produce readable messages;
+unexpected failures return generic messages without SQL, credentials, or
+provider response bodies. Clients refresh only after success.
+
+`admin-internal-users.server.ts` requires `users:manage`, validates bounded
+email/password/department fields, and rejects missing or customer-domain roles
+before creating Auth. User/profile upserts tolerate Supabase provisioning
+triggers. The local writes and `internal_user_created` audit event share one
+transaction. If it fails, the newly created Auth identity is deleted; a failed
+cleanup returns its ID for manual support cleanup. Existing emails are never
+reused, overwritten, or deleted. Passwords are neither returned nor audited.
+
+Role creation/editing requires a super admin with `settings:manage`, matching
+the Roles UI. Keys normalize before validation; duplicate creation uses the
+unique key index with conflict handling. Role writes and their audit events
+share a transaction. Editing locks the role row; system role domains and
+domains of assigned roles cannot change. New roles start with no permissions;
+select and save permissions explicitly before assigning staff.
+
+No schema migration is required. Focused automated coverage exercises staff
+validation, provisioning order, compensation, safe errors, and role input
+normalization. Live Supabase provisioning and database-trigger integration
+require configured development credentials and remain unverified locally.
+
+2026-11-23 verification: 14 focused account/role checks and `pnpm typecheck`
+pass. The full suite has 111 passing checks and the same three pre-existing
+failures (obsolete category/package route references and the public-profile
+SQL assertion). Production compilation and build TypeScript checks pass;
+page-data collection requires missing local database/Supabase variables.
+Lint remains unavailable because the repository does not install ESLint.
+
 Sign-in returns a discriminated success/error result for validation and Supabase
 authentication failures. The form shows the returned message and does not
 refresh or navigate on failure. Network failures and provider outages show a

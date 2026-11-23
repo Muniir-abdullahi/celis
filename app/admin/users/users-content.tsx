@@ -9,32 +9,17 @@ import type {
 } from "~/server/auth.functions";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { CreateInternalUserDialog } from "~/components/admin/create-internal-user-dialog";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Pagination } from "~/components/ui/pagination";
 import { Combobox } from "~/components/ui/combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "~/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { AdminTable } from "~/components/admin/admin-table";
 import { CreateCustomerDialog } from "~/components/admin/create-customer-dialog";
 import { PageHeader } from "~/components/admin/page-header";
 import { VerificationBadge } from "~/components/admin/status-badge";
 import {
-  createAdminInternalUser,
   updateAdminUserRole,
   toggleAdminUserVerification,
   toggleAdminUserSuperAdmin,
@@ -75,16 +60,6 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
   const [role, setRole] = useState<string | undefined>(search.role);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    email: "",
-    password: "",
-    role: "listing_review_and_verification_officer",
-    department: "",
-  });
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
   const canManageUsers = permissions.includes("users:manage");
   const isCurrentUserSuper = currentUser?.isSuperAdmin ?? false;
@@ -184,35 +159,6 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
     setRole(undefined);
   };
 
-  const handleCreateInternal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canManageUsers) return;
-    setCreateLoading(true);
-    setCreateError(null);
-    try {
-      await createAdminInternalUser({
-        data: {
-          email: createForm.email,
-          password: createForm.password,
-          role: createForm.role,
-          department: createForm.department || undefined,
-        },
-      });
-      router.refresh();
-      setCreateOpen(false);
-      setCreateForm({
-        email: "",
-        password: "",
-        role: "listing_review_and_verification_officer",
-        department: "",
-      });
-    } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "Failed to create user");
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -220,7 +166,7 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
         description="Manage customer accounts and internal staff separately"
         action={
           canManageUsers ? (domain === "customer" ? <CreateCustomerDialog /> : (
-            <Button onClick={() => setCreateOpen(true)}>Create internal user</Button>
+            <CreateInternalUserDialog roles={internalRoleOptions} />
           )) : undefined
         }
       />
@@ -404,87 +350,6 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
           router.push(usersHref(search, { page: p > 1 ? p : undefined }))
         }
       />
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[85vh] max-w-[calc(100vw-2rem)] overflow-y-auto p-4 sm:max-w-md md:p-6">
-          <DialogHeader>
-            <DialogTitle>Create internal user</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateInternal} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="ci-email">Email</Label>
-              <Input
-                id="ci-email"
-                type="email"
-                value={createForm.email}
-                onChange={(e) =>
-                  setCreateForm((f) => ({ ...f, email: e.target.value }))
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ci-password">Password</Label>
-              <Input
-                id="ci-password"
-                type="password"
-                value={createForm.password}
-                onChange={(e) =>
-                  setCreateForm((f) => ({ ...f, password: e.target.value }))
-                }
-                required
-                minLength={8}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ci-role">Role</Label>
-              <Select
-                value={createForm.role}
-                onValueChange={(v) =>
-                  setCreateForm((f) => ({ ...f, role: v }))
-                }
-              >
-                <SelectTrigger id="ci-role" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[50vh]">
-                  {internalRoleOptions.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ci-department">Department</Label>
-              <Input
-                id="ci-department"
-                value={createForm.department}
-                onChange={(e) =>
-                  setCreateForm((f) => ({ ...f, department: e.target.value }))
-                }
-                placeholder="e.g. Operations"
-              />
-            </div>
-            {createError && (
-              <p className="text-sm text-destructive">{createError}</p>
-            )}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createLoading}>
-                {createLoading ? "Creating..." : "Create user"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
