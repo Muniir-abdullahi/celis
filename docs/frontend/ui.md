@@ -36,6 +36,24 @@ saves. Failed role saves retain the form; a newly created role is selected so
 its permissions can be configured. Duplicate and invalid keys display inline
 errors. New roles have no permissions until explicitly configured.
 
+### Roles workspace
+
+The workspace follows Diiwaan's module grouping using Celis tokens and Radix
+controls. The searchable role list separates internal staff from customers;
+selected-role actions replace the old row of role/edit/delete buttons.
+Permission groups expose counts and search. Technical keys remain searchable
+without being displayed as form copy. The sticky bar reports unsaved changes,
+loading, errors and save results.
+
+`app/admin/roles/use-role-permissions.ts` separates drafts from baselines,
+ignores stale requests, clears stale data after load errors and preserves edits
+after save errors. Read-only/loading states disable edits. Switching roles asks
+before discarding edits; browser close/reload warns while dirty. This does not
+intercept every client-side navigation link. Server permission policy is unchanged.
+
+Verification: Production build, TypeScript and four focused roles tests pass.
+Authenticated visual QA remains pending because local Chrome was signed out.
+
 ### Admin loading states
 
 Every admin page now has an App Router `loading.tsx` boundary. The shell remains

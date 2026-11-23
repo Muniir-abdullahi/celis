@@ -1,5 +1,20 @@
 # Changelog
 
+## [v5.2.0] - 2026-11-23
+
+### Added
+
+- Diiwaan-inspired roles workspace with searchable staff/customer roles,
+  module-grouped permissions, permission search, accessible switches, counts,
+  selected-role actions and a sticky save/discard bar using Celis tokens.
+
+### Fixed
+
+- Permission loading ignores stale responses, disables saving while loading,
+  exposes retryable errors and preserves selections after save failures.
+- Unsaved permission changes require confirmation before switching roles and
+  trigger browser leave/reload warnings. Save is disabled without changes.
+
 ## [v5.1.0] - 2026-11-23
 
 ### Added

@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   fetchCurrentUser,
   fetchAllPermissions,
   fetchRoles,
 } from "~/server/auth.functions";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { RolesWorkspace } from "~/components/admin/roles-workspace";
+import { useRolePermissions } from "./use-role-permissions";
+import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
-import { Badge } from "~/components/ui/badge";
+
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
@@ -32,8 +33,7 @@ import {
 import { PageHeader } from "~/components/admin/page-header";
 import { ConfirmDialog } from "~/components/admin/confirm-dialog";
 import {
-  fetchRolePermissions,
-  updateRolePermissions,
+
   createRoleFn,
   updateRoleFn,
   deleteRoleFn,
@@ -48,11 +48,11 @@ type RolesData = {
 export function RolesContent({ data }: { data: RolesData }) {
   const { user, permissions, roles } = data;
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<string>("admin");
-  const [rolePermissions, setRolePermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>(roles.find((role) => role.key === "admin")?.key ?? roles[0]?.key ?? "");
+  const [pendingRole, setPendingRole] = useState<string | null>(null);
+  const canManage = user?.isSuperAdmin ?? false;
+  const editor = useRolePermissions(selectedRole, canManage);
+
   const [confirmAction, setConfirmAction] = useState<"role" | "permissions" | null>(null);
 
   const [roleDialog, setRoleDialog] = useState<{
@@ -75,35 +75,10 @@ export function RolesContent({ data }: { data: RolesData }) {
   }>({ open: false });
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const canManage = user?.isSuperAdmin ?? false;
-
-  useEffect(() => {
-    setLoading(true);
-    fetchRolePermissions({ data: { role: selectedRole as never } })
-      .then((perms) => setRolePermissions(perms))
-      .finally(() => setLoading(false));
-  }, [selectedRole]);
-
-  const togglePermission = (key: string) => {
-    if (!canManage) return;
-    setRolePermissions((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
-  };
-
-  const handleSave = async () => {
-    if (!canManage) return;
-    setSaving(true);
-    setSaved(false);
-    try {
-      await updateRolePermissions({
-        data: { role: selectedRole, permissionKeys: rolePermissions },
-      });
-      router.refresh();
-      setSaved(true);
-    } finally {
-      setSaving(false);
-    }
+  const selectRole = (key: string) => {
+    if (key === selectedRole || editor.saving) return;
+    if (editor.dirty) setPendingRole(key);
+    else setSelectedRole(key);
   };
 
   const openCreateRole = () => {
@@ -138,7 +113,7 @@ export function RolesContent({ data }: { data: RolesData }) {
         : await updateRoleFn({ data: roleForm });
       setConfirmAction(null);
       if (!result.success) { setRoleFormError(result.error); return; }
-      setSelectedRole(result.data.key);
+      selectRole(result.data.key);
       router.refresh();
       setRoleDialog({ open: false, mode: "create" });
     } catch (err) {
@@ -156,7 +131,7 @@ export function RolesContent({ data }: { data: RolesData }) {
       await deleteRoleFn({ data: { key: deleteDialog.role.key } });
       router.refresh();
       if (selectedRole === deleteDialog.role.key) {
-        setSelectedRole("admin");
+        setSelectedRole(roles.find((role) => role.key !== deleteDialog.role?.key)?.key ?? "");
       }
       setDeleteDialog({ open: false });
     } finally {
@@ -173,7 +148,7 @@ export function RolesContent({ data }: { data: RolesData }) {
         description="Control what each role can do in the admin dashboard"
         action={
           canManage ? (
-            <Button onClick={openCreateRole}>Create role</Button>
+            <Button disabled={editor.saving} onClick={openCreateRole}><Plus className="mr-2 h-4 w-4" />Create role</Button>
           ) : undefined
         }
       />
@@ -184,100 +159,14 @@ export function RolesContent({ data }: { data: RolesData }) {
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {roles.map((role) => (
-          <div key={role.key} className="flex items-center gap-1">
-            <Button
-              variant={selectedRole === role.key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedRole(role.key)}
-            >
-              {role.label}
-              {role.key === "super_admin" && (
-                <Badge variant="secondary" className="ml-2">
-                  all
-                </Badge>
-              )}
-            </Button>
-            {canManage && (
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={() => openEditRole(role)}
-                >
-                  Edit
-                </Button>
-                {!role.isSystem && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-destructive"
-                    onClick={() => setDeleteDialog({ open: true, role })}
-                  >
-                    Delete
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <RolesWorkspace roles={roles} permissions={permissions} selectedRole={selectedRole} selectedKeys={editor.keys}
+        canManage={canManage} loading={editor.loading} saving={editor.saving} saved={editor.saved} dirty={editor.dirty} error={editor.error}
+        onSelect={selectRole} onToggle={editor.toggle} onEdit={openEditRole} onDelete={(role) => setDeleteDialog({ open: true, role })}
+        onSave={() => setConfirmAction("permissions")} onReset={editor.reset} onRetry={editor.retry} />
 
-      <Card className="border-celis-border bg-celis-surface-base">
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {selectedRoleRecord?.label ?? selectedRole} permissions
-          </CardTitle>
-          {selectedRoleRecord?.description && (
-            <p className="text-sm text-celis-ink-secondary">
-              {selectedRoleRecord.description}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading ? (
-            <p className="text-sm text-celis-ink-secondary">Loading...</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {permissions.map((permission) => {
-                const checked = rolePermissions.includes(permission.key);
-                return (
-                  <div
-                    key={permission.key}
-                    className="flex items-start justify-between gap-3 rounded-md border border-celis-border p-3"
-                  >
-                    <div>
-                      <p className="font-medium text-celis-ink">
-                        {permission.label}
-                      </p>
-                      <p className="text-xs text-celis-ink-secondary">
-                        {permission.description}
-                      </p>
-                      <code className="mt-1 block text-[10px] text-celis-ink-tertiary">
-                        {permission.key}
-                      </code>
-                    </div>
-                    <Switch
-                      checked={checked}
-                      disabled={!canManage || selectedRole === "super_admin"}
-                      onCheckedChange={() => togglePermission(permission.key)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
-            <Button onClick={() => setConfirmAction("permissions")} disabled={!canManage || saving || loading}>
-              {saving ? "Saving..." : "Save permissions"}
-            </Button>
-            {saved && <span className="text-sm text-celis-success">Saved.</span>}
-          </div>
-        </CardContent>
-      </Card>
+      <ConfirmDialog open={pendingRole !== null} onOpenChange={(open) => { if (!open) setPendingRole(null); }}
+        title="Discard unsaved changes?" description="Your permission changes have not been saved. Discard them and switch to the selected role?"
+        confirmLabel="Discard and switch" destructive onConfirm={() => { if (pendingRole) setSelectedRole(pendingRole); setPendingRole(null); }} />
 
       <Dialog open={roleDialog.open} onOpenChange={(open) => { if (!roleFormLoading) setRoleDialog((d) => ({ ...d, open })); }}>
         <DialogContent className="sm:max-w-md">
@@ -376,13 +265,13 @@ export function RolesContent({ data }: { data: RolesData }) {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open && !roleFormLoading && !saving) setConfirmAction(null); }}
+      <ConfirmDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open && !roleFormLoading && !editor.saving) setConfirmAction(null); }}
         title={confirmAction === "permissions" ? "Save role permissions?" : roleDialog.mode === "create" ? "Create role?" : "Update role?"}
         description={confirmAction === "permissions"
           ? `Apply the selected permissions to ${selectedRoleRecord?.label ?? selectedRole}? Users assigned to this role will receive these permissions.`
           : `${roleDialog.mode === "create" ? "Create" : "Update"} ${roleForm.label} as a ${roleForm.domain} role? New roles start without permissions; configure and save their permissions after creation.`}
-        loading={roleFormLoading || saving} confirmLabel="Confirm"
-        onConfirm={() => { if (confirmAction === "role") void saveRole(); else { setConfirmAction(null); void handleSave(); } }} />
+        loading={roleFormLoading || editor.saving} confirmLabel="Confirm"
+        onConfirm={() => { if (confirmAction === "role") void saveRole(); else { setConfirmAction(null); void editor.save(); } }} />
 
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog((d) => ({ ...d, open }))}>
         <DialogContent className="sm:max-w-md">
