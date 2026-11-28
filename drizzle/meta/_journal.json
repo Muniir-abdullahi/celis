@@ -176,6 +176,13 @@
       "when": 1795850735591,
       "tag": "0039_common_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795859200537,
+      "tag": "0040_fine_ted_forrester",
+      "breakpoints": true
     }
   ]
 }
