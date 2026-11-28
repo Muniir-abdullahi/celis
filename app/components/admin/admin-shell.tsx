@@ -10,6 +10,8 @@ import { CelisLogo } from "~/components/branding/celis-logo";
 import { ThemeToggle } from "~/components/theme/theme-toggle";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { StaffIdentityPanel } from "./staff-identity-panel";
+import type { StaffIdentity } from "~/lib/staff-identity";
 import {
   LayoutDashboard,
   Users,
@@ -30,6 +32,7 @@ import {
 } from "lucide-react";
 
 interface AdminShellProps {
+  identity: StaffIdentity;
   permissions: string[];
   children: ReactNode;
 }
@@ -110,7 +113,7 @@ const nav = [
   },
 ];
 
-export function AdminShell({ permissions, children }: AdminShellProps) {
+export function AdminShell({ permissions, children, identity }: AdminShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuth();
@@ -167,7 +170,7 @@ export function AdminShell({ permissions, children }: AdminShellProps) {
               badge
             />
             {!collapsed && (
-              <span className="font-semibold text-celis-ink">Admin</span>
+              <span className="font-semibold text-celis-ink">Staff</span>
             )}
           </div>
           <Button
@@ -187,6 +190,7 @@ export function AdminShell({ permissions, children }: AdminShellProps) {
           </Button>
         </div>
         <Separator />
+        <div className={collapsed ? "flex justify-center py-2" : "px-1"}><StaffIdentityPanel user={identity} compact={collapsed} /></div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {visibleNav.map((item) => {
             const active =
@@ -257,7 +261,7 @@ export function AdminShell({ permissions, children }: AdminShellProps) {
       <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-celis-border bg-celis-surface-base px-4 md:hidden">
         <div className="flex items-center gap-2">
           <CelisLogo variant="primary" size={32} badge />
-          <span className="font-semibold text-celis-ink">Admin</span>
+          <StaffIdentityPanel user={identity} compact />
         </div>
         <div className="flex items-center gap-1">
           <Button

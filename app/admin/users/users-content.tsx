@@ -10,6 +10,7 @@ import type {
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { CreateInternalUserDialog } from "~/components/admin/create-internal-user-dialog";
+import { StaffIdentityDialog } from "~/components/admin/staff-identity-dialog";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -30,6 +31,7 @@ import { Search, Copy, Check } from "lucide-react";
 type UsersData = Awaited<ReturnType<typeof fetchAdminUsers>>;
 type UsersSearch = { search?: string; role?: string; domain: "customer" | "internal"; page: number };
 type UsersContentProps = {
+  departments: string[];
   result: UsersData;
   currentUser: Awaited<ReturnType<typeof fetchUserAction>>;
   permissions: string[];
@@ -53,7 +55,7 @@ function formatRoleLabel(role: string) {
     .join(" ");
 }
 
-export function UsersContent({ result, currentUser, permissions, roles, search }: UsersContentProps) {
+export function UsersContent({ result, currentUser, permissions, roles, search, departments }: UsersContentProps) {
   const { items, page, totalPages } = result;
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(search.search ?? "");
@@ -166,7 +168,7 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
         description="Manage customer accounts and internal staff separately"
         action={
           canManageUsers ? (domain === "customer" ? <CreateCustomerDialog /> : (
-            <CreateInternalUserDialog roles={internalRoleOptions} />
+            <div className="flex flex-wrap gap-2"><StaffIdentityDialog departments={departments} /><CreateInternalUserDialog roles={internalRoleOptions} departments={departments} /></div>
           )) : undefined
         }
       />
@@ -300,6 +302,9 @@ export function UsersContent({ result, currentUser, permissions, roles, search }
           },
           ...(domain === "internal"
             ? [
+                { key: "staffId", header: "Staff ID", cell: (u: (typeof optimisticUsers)[number]) => <span className="whitespace-nowrap font-mono text-xs">{u.staffId ?? "Not assigned"}</span> },
+                { key: "department", header: "Department", cell: (u: (typeof optimisticUsers)[number]) => u.department || "Department not assigned" },
+                { key: "identity", header: "Identity", cell: (u: (typeof optimisticUsers)[number]) => canManageUsers ? <StaffIdentityDialog user={u} departments={departments} /> : null },
                 {
                   key: "superadmin" as const,
                   header: "Super admin",

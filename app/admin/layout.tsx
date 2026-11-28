@@ -19,5 +19,5 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!user || !(user.isInternal || permissions.includes("admin:access"))) {
     redirect("/");
   }
-  return <AdminShell permissions={permissions}>{children}</AdminShell>;
+  return <AdminShell permissions={permissions} identity={{ displayName: user.displayName, staffId: user.staffId, department: user.department, role: user.role, isSuperAdmin: user.isSuperAdmin }}>{children}</AdminShell>;
 }

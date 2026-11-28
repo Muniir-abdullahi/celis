@@ -10,18 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { ConfirmDialog } from "./confirm-dialog";
 import { createAdminInternalUser } from "~/server/admin.functions";
 
-export function CreateInternalUserDialog({ roles }: { roles: { value: string; label: string }[] }) {
+export function CreateInternalUserDialog({ roles, departments }: { roles: { value: string; label: string }[]; departments: string[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ email: "", password: "", role: "", department: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "", department: "" });
   const selectedRole = roles.find((role) => role.value === form.role);
   const changeOpen = (value: boolean) => {
     if (busy) return;
     setOpen(value); setConfirm(false); setError("");
-    setForm({ email: "", password: "", role: roles[0]?.value ?? "", department: "" });
+    setForm({ fullName: "", email: "", password: "", role: roles[0]?.value ?? "", department: "" });
   };
   const create = async () => {
     if (busy || !selectedRole) return;
@@ -30,7 +30,7 @@ export function CreateInternalUserDialog({ roles }: { roles: { value: string; la
       const result = await createAdminInternalUser({ data: form });
       if (!result.success) { setError(result.error); setConfirm(false); return; }
       setOpen(false); setConfirm(false);
-      setForm({ email: "", password: "", role: "", department: "" });
+      setForm({ fullName: "", email: "", password: "", role: "", department: "" });
       router.refresh();
     } catch {
       setError("Could not reach the server. Please try again."); setConfirm(false);
@@ -46,6 +46,7 @@ export function CreateInternalUserDialog({ roles }: { roles: { value: string; la
           <DialogDescription>Create a staff account with the selected role. Save the password securely.</DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); setError(""); if (selectedRole) setConfirm(true); }}>
+          <div className="space-y-2"><Label htmlFor="ci-name">Full name</Label><Input id="ci-name" required maxLength={60} disabled={busy} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
           <div className="space-y-2"><Label htmlFor="ci-email">Email</Label>
             <Input id="ci-email" type="email" required maxLength={255} disabled={busy} autoComplete="off"
               value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
@@ -58,8 +59,9 @@ export function CreateInternalUserDialog({ roles }: { roles: { value: string; la
               <SelectContent>{roles.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}</SelectContent>
             </Select></div>
           <div className="space-y-2"><Label htmlFor="ci-department">Department</Label>
-            <Input id="ci-department" maxLength={100} disabled={busy} value={form.department}
-              onChange={(e) => setForm({ ...form, department: e.target.value })} /></div>
+            <Select disabled={busy} value={form.department ? `department:${form.department}` : "none"} onValueChange={(value) => setForm({ ...form, department: value === "none" ? "" : value.slice(11) })}>
+              <SelectTrigger id="ci-department"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Department not assigned</SelectItem>{departments.filter(Boolean).map((name) => <SelectItem key={name} value={`department:${name}`}>{name}</SelectItem>)}</SelectContent>
+            </Select></div>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" disabled={busy} onClick={() => changeOpen(false)}>Cancel</Button>

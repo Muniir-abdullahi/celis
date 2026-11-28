@@ -5,6 +5,7 @@ import {
   fetchRoles,
 } from "~/server/auth.functions";
 import { UsersContent } from "./users-content";
+import { listStaffDepartments } from "~/server/staff-identity.functions";
 
 export default async function UsersPage({
   searchParams,
@@ -23,13 +24,14 @@ export default async function UsersPage({
   const role = first(params.role);
   const domain = first(params.domain) === "internal" ? "internal" : "customer";
   const page = Math.max(1, Math.floor(Number(first(params.page)) || 1));
-  const [result, currentUser, permissions, roles] = await Promise.all([
+  const [result, currentUser, permissions, roles, departments] = await Promise.all([
     fetchAdminUsers({
       data: { search: query, role, domain, page, limit: 10 },
     }),
     fetchCurrentUser(),
     fetchCurrentUserPermissions(),
     fetchRoles(),
+    listStaffDepartments(),
   ]);
   return (
     <UsersContent
@@ -37,6 +39,7 @@ export default async function UsersPage({
       currentUser={currentUser}
       permissions={permissions}
       roles={roles}
+      departments={departments}
       search={{ search: query, role, domain, page }}
     />
   );
