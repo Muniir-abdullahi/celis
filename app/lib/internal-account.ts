@@ -2,6 +2,7 @@ import { z } from "zod";
 import { AdminInputError } from "./admin-mutation";
 
 export const internalAccountSchema = z.object({
+  fullName: z.string().trim().min(1).max(60),
   email: z.string().trim().toLowerCase().email().max(255),
   password: z.string().min(8).max(72),
   role: z.string().trim().min(1).max(60),

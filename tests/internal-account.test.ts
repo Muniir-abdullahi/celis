@@ -4,7 +4,7 @@ import { internalAccountSchema, provisionInternalAccount } from "../app/lib/inte
 import { adminMutation, AdminInputError } from "../app/lib/admin-mutation";
 import { roleInputSchema } from "../app/lib/role-input";
 
-const input = internalAccountSchema.parse({ email: " Staff@EXAMPLE.com ", password: "Test-password-123", role: "finance_officer", department: " Finance " });
+const input = internalAccountSchema.parse({ fullName: " Staff Member ", email: " Staff@EXAMPLE.com ", password: "Test-password-123", role: "finance_officer", department: " Finance " });
 
 function fixture() {
   const calls: string[] = [];
@@ -18,8 +18,9 @@ function fixture() {
 
 test("staff input normalizes identity and bounds provider/database fields", () => {
   assert.equal(input.email, "staff@example.com");
+  assert.equal(input.fullName, "Staff Member");
   assert.equal(input.department, "Finance");
-  for (const extra of [{ password: "short" }, { password: "x".repeat(73) }, { department: "x".repeat(101) }, { isSuperAdmin: true }, { role: "" }]) {
+  for (const extra of [{ fullName: " " }, { fullName: "x".repeat(61) }, { staffId: "CELIS-000001" }, { password: "short" }, { password: "x".repeat(73) }, { department: "x".repeat(101) }, { isSuperAdmin: true }, { role: "" }]) {
     assert.equal(internalAccountSchema.safeParse({ ...input, ...extra }).success, false);
   }
 });

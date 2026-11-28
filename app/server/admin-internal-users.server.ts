@@ -1,5 +1,6 @@
 import { db } from "~/db";
-import { authUsers, users, profiles, auditLogs } from "~/db/schema";
+import { authUsers, users, profiles, auditLogs, staffDepartments } from "~/db/schema";
+import { eq } from "drizzle-orm";
 import { internalAccountSchema, provisionInternalAccount } from "~/lib/internal-account";
 import { AdminInputError } from "~/lib/admin-mutation";
 import { getServiceSupabase } from "~/lib/supabase/server";
@@ -28,6 +29,10 @@ export async function createInternalUser(rawInput: unknown) {
     async saveAccount(id, data) {
       await db.transaction(async (tx) => {
         // Supabase triggers can already have provisioned these records.
+        if (data.department) {
+          const [department] = await tx.select().from(staffDepartments).where(eq(staffDepartments.name, data.department)).limit(1);
+          if (!department) throw new AdminInputError("Select an existing department.");
+        }
         await tx.insert(authUsers).values({ id, email: data.email })
           .onConflictDoNothing({ target: authUsers.id });
         const account = {
@@ -37,7 +42,7 @@ export async function createInternalUser(rawInput: unknown) {
         };
         await tx.insert(users).values({ id, ...account })
           .onConflictDoUpdate({ target: users.id, set: account });
-        const profile = { displayName: data.email.split("@")[0].slice(0, 60), sellerNumber: null, sellerType: null };
+        const profile = { displayName: data.fullName, sellerNumber: null, sellerType: null };
         await tx.insert(profiles).values({ id, ...profile })
           .onConflictDoUpdate({ target: profiles.id, set: profile });
         await tx.insert(auditLogs).values({

@@ -269,6 +269,7 @@ export async function getAdminUsers(options?: {
     conditions.push(
       or(
         ilike(users.email, term),
+        ilike(users.staffId, term),
         ilike(profiles.displayName, term),
         ilike(users.walletPhone, term),
         ilike(profiles.sellerNumber, term)
@@ -315,6 +316,8 @@ export async function getAdminUsers(options?: {
       email: r.user.email,
       role: r.user.role,
       isInternal: r.user.isInternal,
+      staffId: r.user.staffId,
+      department: r.user.department,
       displayName: r.profile?.displayName ?? null,
       phone: r.user.walletPhone ?? r.profile?.phone ?? null,
       isVerified:

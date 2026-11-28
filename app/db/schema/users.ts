@@ -24,6 +24,10 @@ export const authUsers = pgTable("auth.users", {
   email: varchar("email", { length: 255 }),
 });
 
+export const staffDepartments = pgTable("staff_departments", {
+  name: varchar("name", { length: 100 }).primaryKey(),
+});
+
 export const users = pgTable("users", {
   id: uuid("id")
     .primaryKey()
@@ -31,11 +35,12 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   role: text("role").notNull().default("buyer"),
   isInternal: boolean("is_internal").notNull().default(false),
+  staffId: varchar("staff_id", { length: 30 }).unique(),
   createdBy: uuid("created_by").references(
     (): AnyPgColumn => users.id,
     { onDelete: "set null" }
   ),
-  department: varchar("department", { length: 100 }),
+  department: varchar("department", { length: 100 }).references(() => staffDepartments.name),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   primaryBankAccountId: uuid("primary_bank_account_id"),

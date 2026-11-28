@@ -22,6 +22,7 @@ export interface CurrentUser {
   isSuperAdmin: boolean;
   isInternal: boolean;
   department: string | null;
+  staffId: string | null;
   mfaEnabled: boolean;
   lastLoginAt: Date | null;
 }
@@ -66,6 +67,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     isSuperAdmin: row.user.isSuperAdmin,
     isInternal: row.user.isInternal || row.user.role === "admin",
     department: row.user.department ?? null,
+    staffId: row.user.staffId,
     mfaEnabled: row.user.mfaEnabled,
     lastLoginAt: row.user.lastLoginAt,
   };
@@ -109,6 +111,7 @@ export async function getCurrentUserProfile() {
     isSuperAdmin: row.user.isSuperAdmin,
     isInternal: row.user.isInternal || row.user.role === "admin",
     department: row.user.department ?? null,
+    staffId: row.user.staffId,
     mfaEnabled: row.user.mfaEnabled,
     lastLoginAt: row.user.lastLoginAt,
   };
@@ -403,6 +406,9 @@ export async function ensureLocalUserRecord(
     .where(eq(profiles.id, id))
     .limit(1);
 
+  const [identity] = await db.select({ staffId: users.staffId, department: users.department })
+    .from(users).where(eq(users.id, id)).limit(1);
+
   return {
     id,
     email,
@@ -414,7 +420,8 @@ export async function ensureLocalUserRecord(
     verificationStatus: "pending" as import("~/db/schema").VerificationStatus,
     isSuperAdmin: false,
     isInternal,
-    department: null,
+    department: identity?.department ?? null,
+    staffId: identity?.staffId ?? null,
     mfaEnabled: false,
     lastLoginAt: null,
   };

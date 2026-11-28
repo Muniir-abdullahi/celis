@@ -169,6 +169,13 @@
       "when": 1795421988094,
       "tag": "0038_seller_cancellation_and_discounts",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795850735591,
+      "tag": "0039_common_madame_masque",
+      "breakpoints": true
     }
   ]
 }
