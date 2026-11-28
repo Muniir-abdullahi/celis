@@ -5,6 +5,9 @@ Supabase storage, validation, and errors.
 
 ## Server Actions and Route Handlers
 
+Supabase phone OTP delivery can use Celis's signed webhook and encrypted outbox;
+see [WhatsApp OTP delivery](whatsapp-otp.md) for migration 0040, workers and cutover.
+
 Server/data behavior lives under `app/server`.
 
 Patterns:

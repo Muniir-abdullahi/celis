@@ -4,6 +4,10 @@ This is the compact domain guide for Celis. The full product source is `somalia-
 
 ## Core Terms
 
+- **Auth delivery:** Encrypted, short-lived delivery of a Supabase-generated OTP
+  through WAHA. Supabase retains all code verification/session authority. See
+  [WhatsApp OTP delivery](../backend/whatsapp-otp.md).
+
 - **User:** Marketplace account, buyer, seller, admin, or platform staff depending on role.
 - **Listing:** Marketplace item/service posted by a seller.
 - **Category:** Listing classification. Two-level hierarchy (parent → subcategory).

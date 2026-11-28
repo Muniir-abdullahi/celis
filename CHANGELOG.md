@@ -1,5 +1,17 @@
 # Changelog
 
+## [v8.0.0] - 2026-11-28
+
+### Added
+
+- Signed `POST /api/auth/send-sms` webhook lets Supabase deliver phone OTPs
+  through the Celis backend and WAHA without a Supabase Edge Function.
+- Migration 0040 adds an RLS-protected encrypted outbox with webhook deduplication,
+  leased delivery attempts, bounded retries/expiry and sensitive payload cleanup.
+- Protected `/api/internal/auth-deliveries` worker supports scheduled recovery.
+  Deployment, scheduler, environment and verified-login cutover are documented;
+  the existing Edge Function remains active until migration is accepted.
+
 ## [v7.0.0] - 2026-11-28
 
 ### Added
