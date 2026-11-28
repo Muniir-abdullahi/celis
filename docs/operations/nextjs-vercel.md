@@ -34,6 +34,10 @@ absent. Lint cannot start because ESLint is not installed/configured here.
 
 ## Required Environment Variables
 
+The optional Celis-hosted Send SMS hook requires additional server-only
+credentials, migration 0040 and a protected per-minute retry scheduler. Follow
+[WhatsApp OTP delivery](../backend/whatsapp-otp.md) before changing the live hook.
+
 If sign-in reports a connection failure, check the configured Supabase project's
 `/auth/v1/health` endpoint from the same environment as the Next.js process.
 Supply the configured anon key as the `apikey` header without logging it.
