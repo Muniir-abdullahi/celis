@@ -261,6 +261,10 @@ Rules:
 
 ## Moderation, RBAC & Audit
 
+Internal staff have permanent `CELIS-` Staff IDs, names and managed departments.
+Identity display does not change authorization; see
+[Staff identity](../backend/staff-identity.md) for role classification and migration.
+
 - **Listing activity log:** `/admin/listings/[id]` shows that listing's
   `audit_logs` (resource `listing`), paginated 10 per page via `?activity=`,
   for staff with `audit:read` (`fetchListingAuditLogs`). Listing events:

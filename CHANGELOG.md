@@ -1,5 +1,17 @@
 # Changelog
 
+## [v7.0.0] - 2026-11-28
+
+### Added
+
+- Migration 0039 adds permanent unique Staff IDs, existing-staff backfill and
+  a managed department list. Internal account creation requires a full name.
+- Signed-in staff identity appears in the desktop sidebar and mobile/collapsed
+  identity menu, distinguishing administrators from other internal staff.
+- Authorized staff can add departments and correct staff identity through
+  confirmed, validated, audited actions. Internal user tables show Staff IDs
+  and departments and support searching by Staff ID. Permissions are unchanged.
+
 ## [v6.0.0] - 2026-11-23
 
 ### Added

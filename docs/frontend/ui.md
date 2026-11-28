@@ -25,6 +25,10 @@ tables, and the design-system pointer.
 
 ## Routing & Pages
 
+The staff shell shows signed-in identity in its expanded sidebar and a dropdown
+on mobile/collapsed views. Internal users can be given a full name and managed
+department; see [Staff identity](../backend/staff-identity.md).
+
 On `/admin/users`, the internal-user form lives in
 `app/components/admin/create-internal-user-dialog.tsx`. It lists current
 internal roles, disables creation when none exist, bounds inputs, confirms the

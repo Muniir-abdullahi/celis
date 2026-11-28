@@ -39,6 +39,9 @@ allowance usage is backfilled before the new consumers are deployed.
 
 ## Drizzle & Postgres
 
+Internal staff identity fields, department configuration, actions and migration
+0039 are documented in [Staff identity](staff-identity.md).
+
 Key files:
 
 - `app/db/schema/*.ts`
